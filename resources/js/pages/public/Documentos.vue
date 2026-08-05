@@ -118,7 +118,7 @@ const filteredDocuments = computed(() => {
         <!-- Hero Header -->
         <section 
             class="relative h-[65vh] min-h-[260px] flex items-center overflow-hidden bg-cover bg-center text-white"
-            style="background-image: url('https://scontent.flim26-1.fna.fbcdn.net/v/t39.30808-6/684209047_988255950222304_4304482649156688022_n.jpg?stp=dst-jpg_tt6&cstp=mx1600x1066&ctp=s1600x1066&_nc_cat=100&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeH8pRbDJterI_4kfAJrfhEth_fU78i5DjyH99TvyLkOPExIu168MRbh304r1boYntcawbcIzVWA6jNSHE0qw7vK&_nc_ohc=DSrFJcjrEkQQ7kNvwGyIDgy&_nc_oc=AdoCBBZlxeANzXpp9oF0Vksjh51HGnJ5Q7ldhYgtogCsyvNGr8IN7J-zKihz_V_BrE0&_nc_zt=23&_nc_ht=scontent.flim26-1.fna&_nc_gid=bNo6wW1ZIjfLU4SaWGl_xA&_nc_ss=7b2a8&oh=00_AQGJJ4rrIYMmva01quxB4XyQU25zJpRuvYgP5JOkZ2N_Hg&oe=6A72C0C9');"
+            style="background-image: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1600&q=80');"
         >
             <!-- Gradient Overlay for readability -->
             <div class="absolute inset-0 bg-gradient-to-r from-neutral-950/90 via-neutral-950/70 to-transparent z-10"></div>

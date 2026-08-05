@@ -47,7 +47,7 @@ export const eventsList: EventItem[] = [
         location: 'Auditorio Magno',
         organizer: 'Dirección de Proyección Social y Extensión Cultural',
         description: 'Convocatoria y capacitación oficial de brigadistas de cara al XI Concurso de Sikuris UNA Puno.',
-        image: 'https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/674153008_980771970970702_2033160936241324351_n.jpg?stp=dst-jpg_tt6&cstp=mx410x610&ctp=s410x610&_nc_cat=103&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeEVpiO-AzkiiPFOc1IhcDQJ9rSKOeRnTO_2tIo55GdM77-kOHmg_7oe7Ut2PJTJP8lgifa6jVHA6Jnr19Ovplo_&_nc_ohc=xwSnCX2qQ1IQ7kNvwHtnGTU&_nc_oc=AdpRM7TiUJQSESZuaqEpyy6Gd4KDFT5aArIt-g2kbeQWm0nrBB8g4NlTPHehthBHN_I&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=QUSQNt7hLRmlK9Smf9WUVw&_nc_ss=7b2a8&oh=00_AQCmnPfPiGeU54ricVIEkpGDhSvEwX3m8vCLCx1nq39-uA&oe=6A559A04',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -64,7 +64,7 @@ export const eventsList: EventItem[] = [
         location: 'Auditorio de Ingeniería',
         organizer: 'Sub Unidad de Seguimiento al Graduado',
         description: 'Talleres de entrevista personal, elaboración de CV y presentación de bolsa de empleo para egresados.',
-        image: 'https://scontent.flim26-1.fna.fbcdn.net/v/t39.30808-6/668483025_851438064632703_7365028970198030993_n.jpg?stp=dst-jpg_tt6&cstp=mx1487x2048&ctp=s1487x2048&_nc_cat=101&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeE2Zp0TSTwjAJOKKPWAG6_vHsAZYWHZbXIewBlhYdltcm-xO-vIv7FVQaeYBO4_NB0VwSNJVLmUN3dn9u7UrGch&_nc_ohc=7A6U9r8JP1IQ7kNvwHdxkCp&_nc_oc=AdrfpOfE29__ynFeUzn32P5aQcBYKGJlWTzLuN8oUqATFpv24fIDi7bSJXKBLBGZ4cw&_nc_zt=23&_nc_ht=scontent.flim26-1.fna&_nc_gid=Nl6NEeuur19z3OIJKvd8Ag&_nc_ss=7b2a8&oh=00_AQAqM5VFrH9jrU9sIaBmxKcxyBZ-3H-zvpYNqNBPuFjfbw&oe=6A557239',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -81,7 +81,7 @@ export const eventsList: EventItem[] = [
         location: 'Escuela Profesional de Arte, Programa de Danza',
         organizer: 'Sub Unidad de Gestión Ambiental - DPESEC',
         description: 'Sesión de inducción para nuevos ingresantes con el fin de sensibilizar en la conservación del entorno y el desarrollo sostenible institucional.',
-        image: 'https://scontent.flim26-1.fna.fbcdn.net/v/t39.30808-6/668562466_122238357734094957_5248569185913464422_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1367&ctp=s2048x1367&_nc_cat=102&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeFVEhGJ32PILkwFJvRSUQPjgGkOROpTfkiAaQ5E6lN-SHSljZlylGoKm38UQC9tHbBfFUKxcJHwNUAsUSjiMAVV&_nc_ohc=Kgk8fpJnnr0Q7kNvwE_b&_nc_oc=AdrI7oD0M0epqIzaKumXmEJKBz-JacFusRfYAVphPCQwiGODb7Nwd0QajDsi5XHCMno&_nc_zt=23&_nc_ht=scontent.flim26-1.fna&_nc_gid=FuMDuiswZFpZuTkJpdiRjg&_nc_ss=7b2a8&oh=00_AQDLFZ9nQRqLrpvdhogNo3WftaOHVy5lfgKen7tDPNiMNQ&oe=6A559913',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -115,7 +115,7 @@ export const eventsList: EventItem[] = [
         location: 'Bosque Universitario UNA',
         organizer: 'Sub Unidad de Gestión Ambiental',
         description: 'Gran jornada ecológica bajo el lema "Vidas que cuidan vidas" para conservar nuestro entorno verde.',
-        image: 'https://scontent.flim26-1.fna.fbcdn.net/v/t39.30808-6/706832082_122243572256094957_5395378387391500779_n.jpg?stp=dst-jpg_tt6&cstp=mx1054x1492&ctp=s1054x1492&_nc_cat=100&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHu3VxwzL-DEuERibaEWtLc3be0FSG7mVTdt7QVIbuZVCbPhAFxqJcDzDD7ec8J6EXMEJMyBQe25v_BY4uFX9gD&_nc_ohc=taWsLLymG-wQ7kNvwFYVDOM&_nc_oc=AdobQWog4h7RSVlD_r_bRNIR3mJbRUUdeHqjbAjgMALiVbRcO7y9wz8hjHMVHJXqwzA&_nc_zt=23&_nc_ht=scontent.flim26-1.fna&_nc_gid=RDzGd17ZdDocn9l5S2xOQQ&_nc_ss=7b2a8&oh=00_AQDkno0qsQtcBA29AL-Afos22Lby2U4n4DbRi8YlcZ77sw&oe=6A55876D',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -132,7 +132,7 @@ export const eventsList: EventItem[] = [
         location: 'Bosque Universitario UNA',
         organizer: 'Sub Unidad de Gestión Ambiental - DPESEC',
         description: 'Éxito en la jornada organizada por la Sub Unidad de Gestión Ambiental con estudiantes y docentes en el Día Mundial del Ambiente.',
-        image: 'https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/716590398_122244164702094957_5281968196935581773_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeE_w6-J_E90ezO0WzVVvnQ3S9VtIm9KaS1L1W0ib0ppLZo-5sUzqjkZG7QC--Wr5xn_QeKlCBY5iIaRorur7mtn&_nc_ohc=LvwhDk065nsQ7kNvwFU1sy_&_nc_oc=Ado38GRtgJP2UO_CdonNsHC136RDkTPJecJ4dXY6xr8vIJyKtksNwLvbn9oksFy6qrg&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=qaXw6TfaCyEIHWAqLxudgA&_nc_ss=7b2a8&oh=00_AQAnz5LNHeioaNvq_KAbWT20Vbfyn5Fh_FieQY_QwlLhEQ&oe=6A5578A6',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -149,7 +149,7 @@ export const eventsList: EventItem[] = [
         location: 'Provincias de Puno',
         organizer: 'Mozilla Foundation y DPESEC',
         description: 'Voluntariado para documentar y salvaguardar el quechua como parte del patrimonio lingüístico de nuestra región.',
-        image: 'https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/617676918_913983190982914_148026616899236192_n.jpg?stp=dst-jpg_tt6&cstp=mx509x720&ctp=s509x720&_nc_cat=108&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeEMICpiUEPyRCR5xyrhoD4Yyl0wBZrJ5BDKXTAFmsnkEHXyjLtvOqlMkTEKOq8atwuhA2VvESv8InsAOr-FLvLE&_nc_ohc=5THgf-1t6a4Q7kNvwFrshCn&_nc_oc=Adr1QmvdP3-uc7cmHQ4-ig3IASuPTlbmLSmo0DrNRbpZCmmUTHWV5R7sCRQhgCQTl0s&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=wRNl5pb2KBH3tjgf9X9Ffw&_nc_ss=7b2a8&oh=00_AQDxAxCF0fw4S-b_4TUdO1b-KIK2QMiJPDH4qgbT3uMHHA&oe=6A559346',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -166,7 +166,7 @@ export const eventsList: EventItem[] = [
         location: 'Estadio Monumental',
         organizer: 'Dirección de Proyección Social y Extensión Cultural',
         description: 'Reconocimiento y premiación del XI Concurso de Sikuris coronando a Ingeniería Civil como ganador absoluto.',
-        image: 'https://scontent.flim26-1.fna.fbcdn.net/v/t39.30808-6/684233021_987880313593201_3592122811516642606_n.jpg?stp=dst-jpg_tt6&cstp=mx1672x1658&ctp=s1672x1658&_nc_cat=100&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeEC3qAIl2-VB418qHoEYtD2Nxjf_MYt5fA3GN_8xi3l8KDIG0wQrE6HeOmiUC863mkD6a9hHlFnkvH7JkV9tia5&_nc_ohc=UwL2B3_AvRAQ7kNvwGgd2g9&_nc_oc=Adow0rQYxtGA_tIJj6n6v1nnJ_ZWRvmjgM6IyeScWRZOGg4jOegzx8dscn1uobs1jaQ&_nc_zt=23&_nc_ht=scontent.flim26-1.fna&_nc_gid=1ObI4ALEr-5gZqNoUAmT9A&_nc_ss=7b2a8&oh=00_AQBr2LdyJI4fHvb5clsgPz9v619Zjbcyy1x3dip9qO2dBw&oe=6A556741',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: false
     },
@@ -183,7 +183,7 @@ export const eventsList: EventItem[] = [
         location: 'Ciudad Universitaria',
         organizer: 'Dirección de Proyección Social',
         description: 'Concurso de nacimientos uniendo talento, fe, identidad y espíritu navideño en la comunidad universitaria.',
-        image: 'https://scontent.flim26-1.fna.fbcdn.net/v/t39.30808-6/602922804_1280055624150365_2514359579156157330_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x2047&ctp=s2048x2047&_nc_cat=100&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGVBbZ_0m7jwujNYn2aOpuTikuOjquaMCqKS46Oq5owKrZh1EnhR-6w6YtBmlvH0WbtLIRkLkZL2sJ5aP-elpZ8&_nc_ohc=UUB0A1Ubx2EQ7kNvwE_rBP4&_nc_oc=Adp_cwnJM716bBZy3FUq2CAw7UyBNzheaVgH6EKV0kDPMM8Yy9FNYDK7e-LkfxBY7Wc&_nc_zt=23&_nc_ht=scontent.flim26-1.fna&_nc_gid=4FQapYft51u-CAsxNYQwrQ&_nc_ss=7b2a8&oh=00_AQDwva97BjGheGDC6JYNegJoVDDTKakNNyoDCT7AiEbpEQ&oe=6A5599B2',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: false
     },
@@ -200,7 +200,7 @@ export const eventsList: EventItem[] = [
         location: 'Ciudad Universitaria',
         organizer: 'Rectorado UNA Puno',
         description: 'Celebrando 65 años de historia, esfuerzo y compromiso de la Universidad Nacional del Altiplano formando profesionales.',
-        image: 'https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/682441234_987700683611164_4856355883519041153_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1453&ctp=s2048x1453&_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeH3oHjjfIT0W67_xD9IChe3Fd8lVfDjjygV3yVV8OOPKPtrR79R1k3rH2HJfeBKPziHCYXSJPRJVDZEOgnSertT&_nc_ohc=TeyxSA9t9HYQ7kNvwHZmuvB&_nc_oc=Adq3mi4S6_e0_6reAVFn6UkGgyzQ_jhxKkxvvpS2aQfiyJWi0t7Tec0YylKMdAK-X2U&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=gUX6Nd_K6DexHYGXa__6eQ&_nc_ss=7b2a8&oh=00_AQDLXgBZIe5IW8o0EZ-50wWjIdoZXkzsylNkT_xtSyDOsw&oe=6A559C66',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: false
     },
@@ -217,7 +217,7 @@ export const eventsList: EventItem[] = [
         location: 'Rectorado UNA Puno',
         organizer: 'Sub Unidad de Gestión Ambiental - DPESEC',
         description: 'Reconocimiento a brigadistas universitarios por su dedicada labor en el XI Concurso de Sikuris UNA Puno.',
-        image: 'https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/682456544_988255773555655_2161857678295727305_n.jpg?stp=dst-jpg_tt6&cstp=mx1600x1066&ctp=s1600x1066&_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeFb2JbVW1N4_PWMFsYgdiBz30PfwGrFEq7fQ9_AasUSru6S6CF-FXas6I6S5rS8iCA493mT8qi15XvNdarBQ93i&_nc_ohc=1ktNLtK0SzkQ7kNvwE_prv2&_nc_oc=Adqt64O25VUCaPbNHRfn6MxktJw1bK6WsJCVtbS_zH8vSOicdVlHXnAPZBtwCsT280o&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=nbmkKf7J9xKntjikmxNsnA&_nc_ss=7b2a8&oh=00_AQDzJTNZITBA0y_shZtxulpvLu49eKL4kJAOuoRwg_tmIg&oe=6A556D97',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -234,7 +234,7 @@ export const eventsList: EventItem[] = [
         location: 'Zonas urbanas de Puno',
         organizer: 'Sub Unidad de Gestión Ambiental y EP Ingeniería Agrícola',
         description: 'Jornada de reforestación para la recuperación de áreas verdes y la mitigación del cambio climático en la región.',
-        image: 'https://scontent.flim26-1.fna.fbcdn.net/v/t39.30808-6/622843812_122231318738094957_4997334959387432680_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1367&ctp=s2048x1367&_nc_cat=109&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHuh4llA33r017nFk7yChhDOfB0gOz4Buo58HSA7PgG6gG6zuPNDgFkIDfaGhHqotW8Y0C_oFprEnVMUAXA2Vsr&_nc_ohc=W1P6to4MkBQQ7kNvwE_GXfd&_nc_oc=AdqB5-2Okh_QSWnjvnTBsva5irCxDlyIfAEZGvz8JLhFD_cIJEgh7k6S1p6AQWjGJCA&_nc_zt=23&_nc_ht=scontent.flim26-1.fna&_nc_gid=u5jKpnXbMIitp3EA9u_NEA&_nc_ss=7b2a8&oh=00_AQD8A2_px8Qu3NF8dPbPsfWErkVgfAZUqv1F-WDPYKCYSA&oe=6A557456',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -251,7 +251,7 @@ export const eventsList: EventItem[] = [
         location: 'LXI Concurso de Danzas Originarias',
         organizer: 'Sub Unidad de Gestión Ambiental - DPESEC',
         description: 'Brigadas Ambientales concientizando sobre el manejo responsable de residuos durante la Festividad de la Candelaria.',
-        image: 'https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/626591712_122231613206094957_4624632937213165008_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1367&ctp=s2048x1367&_nc_cat=108&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHLDBqbP5EEjkbQmorbkzaRGPa1iFDG-LEY9rWIUMb4sSfNO_MlF41v9dDolsOglef6Ujp6HZIWooXgusi_5LRm&_nc_ohc=HVtNlUpw7hgQ7kNvwEBdncp&_nc_oc=AdrrUS1dIe7ONfjX6LSVnGoilyjTMFSLuOM75s0nd-lzZnswWId4iR6OlGqRHRdqApM&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=MUuPrIL-bAQ0X-EpzpsD1g&_nc_ss=7b2a8&oh=00_AQAUQvVP0B7CrYN-AiGrUQ39JZ4_ZDXs1vwpd6M8CxGXFw&oe=6A559FBB',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     },
@@ -268,7 +268,7 @@ export const eventsList: EventItem[] = [
         location: 'Ciudad Universitaria',
         organizer: 'Dirección de Proyección Cultural de la UNA Puno',
         description: 'Importante festival artístico con danzas originarias y trajes de luces, promoviendo valores de integración y trabajo en equipo.',
-        image: 'https://scontent.flim26-1.fna.fbcdn.net/v/t39.30808-6/597730824_884444593936774_8883800718486422797_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=102&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHtch8NH83-nItKGGNjKMgaV9PoENovnkxX0-gQ2i-eTGl90fZve3P3BthLNju3snG0oChydIT4eXYHLLNEmdhh&_nc_ohc=QzijJhxpWpkQ7kNvwHU5q9T&_nc_oc=Ado9M4kpLBjw4OZPGoKMaDEhM_EOy8jKUvPKlGA3u3kx5oS1ba7vy0P7-KxS0HSk2OY&_nc_zt=23&_nc_ht=scontent.flim26-1.fna&_nc_gid=QgyS7bpMrcNRFU1IdztVfA&_nc_ss=7b2a8&oh=00_AQCW93YrqQSGZaaX7FeYH2E4ejAk52UbQkVSLEQGT03BKw&oe=6A55856A',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: false
     },
@@ -285,7 +285,7 @@ export const eventsList: EventItem[] = [
         location: 'Juliaca - Colegio José Olaya Balandra',
         organizer: 'Sub Unidad de Extensión Universitaria y Proyección Social',
         description: 'Visita guiada para estudiantes de Juliaca a laboratorios universitarios promoviendo la educación superior.',
-        image: 'https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/600213971_884476940600206_3204076433823904720_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=108&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeG7Kc0p3pmcFQ02I9QjOcYHsfvwDQVFnlqx-_ANBUWeWqA632CGJ4SN1p7f2mvB1L5MbDPZWvphSyXm6Q7g-tGt&_nc_ohc=e6IFlUR2Ca4Q7kNvwE2HYKl&_nc_oc=Adq1CLdvc_2vfR5La6S1R2H_RfaVQzz1hHJrYLX9kzQk5rIvVFSWcWOXXN7oKNgbWGk&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=IZkTxIzqIDyL6No8pfkNHQ&_nc_ss=7b2a8&oh=00_AQDOi9qm7zOem46iGmNXFqMVwAsR7zNf6k3Q0oupVDmR4A&oe=6A5576FC',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
         fbLink: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
         isProyeccionSocial: true
     }
