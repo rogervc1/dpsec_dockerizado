@@ -37,8 +37,4 @@ WORKDIR /var/www/html
 # Copiar todo el proyecto compilado desde el builder
 COPY --from=builder --chown=999:999 /app/ ./
 
-# Limpiar y optimizar cachés de Laravel
-RUN php artisan optimize:clear \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+
