@@ -35,8 +35,20 @@ FROM serversideup/php:8.3-fpm-nginx-alpine
 WORKDIR /var/www/html
 
 # Copiar todo el proyecto compilado desde el builder
-COPY --from=builder --chown=999:999 /app/ ./
+COPY --from=builder --chown=www-data:www-data /app/ ./
+
+# Copiar y preparar el script de inicio automático
+COPY docker/startup.sh /etc/entrypoint.d/99-startup.sh
+
+# Cambiar a root para crear carpetas, permisos y preparar el script
+USER root
+
+RUN chmod +x /etc/entrypoint.d/99-startup.sh
 
 # Crear carpetas de almacenamiento necesarias y asegurar permisos
-RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views \
-    && chown -R 999:999 storage bootstrap/cache
+RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views storage/app/public \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Volver al usuario por defecto de serversideup
+USER www-data
