@@ -116,13 +116,33 @@ class PublicCertificateController extends Controller
             'bgPath' => $bgPath,
         ])->render();
 
-        // 4. Configure DomPDF and generate
-        $pdf = Pdf::loadHTML($html);
-        $pdf->setPaper('A4', 'landscape'); // Standard certificate format
-        $pdf->setWarnings(false);
+        // 4. Configure DomPDF and generate with graceful fallback if font parsing fails
+        try {
+            $pdf = Pdf::loadHTML($html);
+            $pdf->setPaper('A4', 'landscape'); // Standard certificate format
+            $pdf->setWarnings(false);
 
-        // Output PDF to browser
-        $filename = 'certificado-' . str_replace(' ', '-', strtolower($certificate->recipient_name)) . '.pdf';
-        return $pdf->download($filename);
+            $filename = 'certificado-' . str_replace(' ', '-', strtolower($certificate->recipient_name)) . '.pdf';
+            return $pdf->download($filename);
+        } catch (\Throwable $e) {
+            // Log warning about font parsing issue
+            \Illuminate\Support\Facades\Log::warning('Certificate PDF font parsing failed, using fallback font: ' . $e->getMessage());
+
+            // Render fallback without custom fontStyles
+            $fallbackHtml = view('pdf.certificate', [
+                'certificate' => $certificate,
+                'template' => $template,
+                'settings' => $settings,
+                'fontStyles' => '', // Fallback to standard Helvetica/sans-serif
+                'bgPath' => $bgPath,
+            ])->render();
+
+            $pdf = Pdf::loadHTML($fallbackHtml);
+            $pdf->setPaper('A4', 'landscape');
+            $pdf->setWarnings(false);
+
+            $filename = 'certificado-' . str_replace(' ', '-', strtolower($certificate->recipient_name)) . '.pdf';
+            return $pdf->download($filename);
+        }
     }
 }
