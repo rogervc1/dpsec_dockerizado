@@ -50,5 +50,3 @@ RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/session
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Volver al usuario por defecto de serversideup
-USER www-data
