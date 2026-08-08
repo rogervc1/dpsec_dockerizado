@@ -32,6 +32,12 @@ RUN npm run build \
 # 2. Final Production Image
 FROM serversideup/php:8.3-fpm-nginx-alpine
 
+# Instalar extensión PHP GD (requerida por dompdf para generar certificados PDF)
+USER root
+RUN apk add --no-cache freetype-dev libjpeg-turbo-dev libpng-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd
+
 WORKDIR /var/www/html
 
 # Copiar todo el proyecto compilado desde el builder
