@@ -76,24 +76,31 @@ class PublicCertificateController extends Controller
             $settings['role_field']['font_family'] ?? null,
         ]);
 
-        // 2. Prepare CSS styles for @font-face only for used fonts
+        // 2. Prepare CSS styles for @font-face using direct storage path and Base64 embedding
         $fontStyles = '';
         if (!empty($usedFontFamilies)) {
             $fonts = CertificateFont::whereIn('font_name', $usedFontFamilies)->get();
             foreach ($fonts as $font) {
-                // Convert storage public URL to local path and normalize slashes for DomPDF
-                $fontPath = str_replace('\\', '/', public_path(str_replace('/storage/', 'storage/', $font->file_path)));
+                // Determine direct physical path in storage/app/public/
+                $relativePath = str_replace('/storage/', '', $font->file_path);
+                $fontPath = storage_path('app/public/' . $relativePath);
+
+                if (!file_exists($fontPath)) {
+                    $fontPath = public_path('storage/' . $relativePath);
+                }
+
                 if (file_exists($fontPath)) {
+                    $base64 = base64_encode(file_get_contents($fontPath));
                     $fontStyles .= "
                     @font-face {
                         font-family: '{$font->font_name}';
-                        src: url('{$fontPath}') format('truetype');
+                        src: url('data:font/truetype;charset=utf-8;base64,{$base64}') format('truetype');
                         font-weight: normal;
                         font-style: normal;
                     }
                     @font-face {
                         font-family: '{$font->font_name}';
-                        src: url('{$fontPath}') format('truetype');
+                        src: url('data:font/truetype;charset=utf-8;base64,{$base64}') format('truetype');
                         font-weight: bold;
                         font-style: normal;
                     }";
@@ -101,10 +108,14 @@ class PublicCertificateController extends Controller
             }
         }
 
-        // Get local path of template background and normalize slashes for DomPDF on Windows
-        $bgPath = str_replace('\\', '/', public_path(str_replace('/storage/', 'storage/', $template->background_path)));
+        // Get local path of template background
+        $bgRelative = str_replace('/storage/', '', $template->background_path);
+        $bgPath = storage_path('app/public/' . $bgRelative);
         if (!file_exists($bgPath)) {
-            $bgPath = asset($template->background_path); // Fallback to URL
+            $bgPath = public_path('storage/' . $bgRelative);
+        }
+        if (!file_exists($bgPath)) {
+            $bgPath = asset($template->background_path);
         }
 
         // 3. Build HTML Template with exact custom layouts
@@ -116,28 +127,30 @@ class PublicCertificateController extends Controller
             'bgPath' => $bgPath,
         ])->render();
 
-        // 4. Configure DomPDF and generate with graceful fallback if font parsing fails
+        // 4. Configure DomPDF and generate
         try {
             $pdf = Pdf::loadHTML($html);
-            $pdf->setPaper('A4', 'landscape'); // Standard certificate format
+            $dompdf = $pdf->getDomPDF();
+            $dompdf->set_option('isRemoteEnabled', true);
+            $dompdf->set_option('isFontSubsettingEnabled', false); // Prevents AdobeFontMetrics 'tree' error on custom fonts
+            $pdf->setPaper('A4', 'landscape');
             $pdf->setWarnings(false);
 
             $filename = 'certificado-' . str_replace(' ', '-', strtolower($certificate->recipient_name)) . '.pdf';
             return $pdf->download($filename);
         } catch (\Throwable $e) {
-            // Log warning about font parsing issue
             \Illuminate\Support\Facades\Log::warning('Certificate PDF font parsing failed, using fallback font: ' . $e->getMessage());
 
-            // Render fallback without custom fontStyles
             $fallbackHtml = view('pdf.certificate', [
                 'certificate' => $certificate,
                 'template' => $template,
                 'settings' => $settings,
-                'fontStyles' => '', // Fallback to standard Helvetica/sans-serif
+                'fontStyles' => '',
                 'bgPath' => $bgPath,
             ])->render();
 
             $pdf = Pdf::loadHTML($fallbackHtml);
+            $pdf->getDomPDF()->set_option('isRemoteEnabled', true);
             $pdf->setPaper('A4', 'landscape');
             $pdf->setWarnings(false);
 
