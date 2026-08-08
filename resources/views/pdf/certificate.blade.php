@@ -2,13 +2,11 @@
     $nameY = $settings['name_field']['y'] ?? '45%';
     $roleY = $settings['role_field']['y'] ?? '68%';
 
-    // DomPDF renders text slightly lower due to baseline and font metrics.
-    // We apply a -4.0% vertical offset compensation on percentage coordinates.
     if (str_ends_with($nameY, '%')) {
-        $nameY = (floatval($nameY) - 3.0) . '%';
+        $nameY = floatval($nameY) . '%';
     }
     if (str_ends_with($roleY, '%')) {
-        $roleY = (floatval($roleY) - 1.5) . '%';
+        $roleY = floatval($roleY) . '%';
     }
 @endphp
 <!DOCTYPE html>
