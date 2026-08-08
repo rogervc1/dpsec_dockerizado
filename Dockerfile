@@ -37,4 +37,6 @@ WORKDIR /var/www/html
 # Copiar todo el proyecto compilado desde el builder
 COPY --from=builder --chown=999:999 /app/ ./
 
-
+# Crear carpetas de almacenamiento necesarias y asegurar permisos
+RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views \
+    && chown -R 999:999 storage bootstrap/cache

@@ -99,7 +99,7 @@ const documents = computed(() => {
             date: d.published_date ? new Date(d.published_date).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
             size: d.file_size || 'N/A',
             description: d.description,
-            file_path: d.file_path ? (d.file_path.startsWith('http') ? d.file_path : '/storage/' + d.file_path) : '#'
+            file_path: d.file_path ? (d.file_path.startsWith('http') ? d.file_path : (d.file_path.startsWith('/') ? d.file_path : '/storage/' + d.file_path)) : '#'
         }));
     }
 
