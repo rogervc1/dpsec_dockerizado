@@ -70,28 +70,34 @@ class PublicCertificateController extends Controller
         }
         $settings = $template->settings;
 
-        // Fetch all custom fonts to inject @font-face rules
-        $fonts = CertificateFont::all();
+        // Fetch font families referenced by this template settings
+        $usedFontFamilies = array_filter([
+            $settings['name_field']['font_family'] ?? null,
+            $settings['role_field']['font_family'] ?? null,
+        ]);
 
-        // 2. Prepare CSS styles for @font-face
+        // 2. Prepare CSS styles for @font-face only for used fonts
         $fontStyles = '';
-        foreach ($fonts as $font) {
-            // Convert storage public URL to local path and normalize slashes for DomPDF on Windows
-            $fontPath = str_replace('\\', '/', public_path(str_replace('/storage/', 'storage/', $font->file_path)));
-            if (file_exists($fontPath)) {
-                $fontStyles .= "
-                @font-face {
-                    font-family: '{$font->font_name}';
-                    src: url('{$fontPath}') format('truetype');
-                    font-weight: normal;
-                    font-style: normal;
+        if (!empty($usedFontFamilies)) {
+            $fonts = CertificateFont::whereIn('font_name', $usedFontFamilies)->get();
+            foreach ($fonts as $font) {
+                // Convert storage public URL to local path and normalize slashes for DomPDF
+                $fontPath = str_replace('\\', '/', public_path(str_replace('/storage/', 'storage/', $font->file_path)));
+                if (file_exists($fontPath)) {
+                    $fontStyles .= "
+                    @font-face {
+                        font-family: '{$font->font_name}';
+                        src: url('{$fontPath}') format('truetype');
+                        font-weight: normal;
+                        font-style: normal;
+                    }
+                    @font-face {
+                        font-family: '{$font->font_name}';
+                        src: url('{$fontPath}') format('truetype');
+                        font-weight: bold;
+                        font-style: normal;
+                    }";
                 }
-                @font-face {
-                    font-family: '{$font->font_name}';
-                    src: url('{$fontPath}') format('truetype');
-                    font-weight: bold;
-                    font-style: normal;
-                }";
             }
         }
 
