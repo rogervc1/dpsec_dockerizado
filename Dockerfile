@@ -34,9 +34,9 @@ FROM serversideup/php:8.3-fpm-nginx-alpine
 
 # Instalar extensión PHP GD (requerida por dompdf para generar certificados PDF)
 USER root
-RUN apk add --no-cache freetype-dev libjpeg-turbo-dev libpng-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+RUN chmod +x /usr/local/bin/install-php-extensions \
+    && install-php-extensions gd
 
 WORKDIR /var/www/html
 
