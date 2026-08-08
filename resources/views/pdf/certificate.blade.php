@@ -2,11 +2,12 @@
     $nameY = $settings['name_field']['y'] ?? '45%';
     $roleY = $settings['role_field']['y'] ?? '68%';
 
+    // Apply a fine -1.2% offset so DomPDF baseline matches HTML preview
     if (str_ends_with($nameY, '%')) {
-        $nameY = floatval($nameY) . '%';
+        $nameY = (floatval($nameY) - 1.2) . '%';
     }
     if (str_ends_with($roleY, '%')) {
-        $roleY = floatval($roleY) . '%';
+        $roleY = (floatval($roleY) - 1.2) . '%';
     }
 @endphp
 <!DOCTYPE html>
