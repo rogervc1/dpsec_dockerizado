@@ -47,6 +47,9 @@
             font-size: {{ $settings['name_field']['font_size'] ?? '32pt' }};
             color: {{ $settings['name_field']['color'] ?? '#111827' }};
             font-weight: bold;
+            line-height: 1;
+            margin: 0;
+            padding: 0;
         }
 
         .role-field {
@@ -58,6 +61,9 @@
             font-family: "{{ $settings['role_field']['font_family'] ?? 'Helvetica' }}", sans-serif;
             font-size: {{ $settings['role_field']['font_size'] ?? '16pt' }};
             color: {{ $settings['role_field']['color'] ?? '#4B5563' }};
+            line-height: 1;
+            margin: 0;
+            padding: 0;
         }
     </style>
 </head>
