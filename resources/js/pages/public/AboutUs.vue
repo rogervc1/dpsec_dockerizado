@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { 
-    Users, 
-    Heart, 
-    Lightbulb, 
-    ShieldCheck, 
-    Flame, 
-    Building2, 
-    TrendingUp, 
-    Scale, 
+import {
+    Users,
+    Heart,
+    Lightbulb,
+    ShieldCheck,
+    Flame,
+    Building2,
+    TrendingUp,
+    Scale,
     UsersRound,
     Leaf
 } from '@lucide/vue';
@@ -207,12 +207,12 @@ const getObjectiveStyle = (index: number) => {
 };
 
 const valueImages = [
-    'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1579202673506-ca3ce28943ef?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=80'
+    'https://cdn.phototourl.com/free/2026-08-09-e1d600ed-05d6-4ba7-8183-8de6577300eb.jpg',
+    'https://cdn.phototourl.com/free/2026-08-09-79549af3-bb13-4a78-a5fd-ac53aa8ddafd.jpg',
+    'https://cdn.phototourl.com/free/2026-08-09-ae473ad0-8722-4a2f-983c-68f0b46c9d7e.jpg',
+    'https://cdn.phototourl.com/free/2026-08-09-178458db-9dcd-40c6-8f97-d8bc593d117d.jpg',
+    'https://cdn.phototourl.com/free/2026-08-09-e4e5d7ff-c8c7-4415-a339-4d41a5e114b1.jpg',
+    'https://cdn.phototourl.com/free/2026-08-09-5669c7b7-504d-447b-a65e-08371d9c2073.jpg'
 ];
 
 // Distinct Theme Palettes for each Institutional Value card (Both Front & Back)
@@ -274,37 +274,37 @@ const values = computed(() => {
             title: 'Compromiso',
             description: 'Nos dedicamos plenamente a nuestra misión y a las comunidades que servimos.',
             icon: Heart,
-            image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&auto=format&fit=crop&q=80',
+            image: 'https://cdn.phototourl.com/free/2026-08-09-e1d600ed-05d6-4ba7-8183-8de6577300eb.jpg',
         },
         {
             title: 'Innovación',
             description: 'Buscamos constantemente nuevas soluciones a los desafíos sociales.',
             icon: Lightbulb,
-            image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80',
+            image: 'https://cdn.phototourl.com/free/2026-08-09-79549af3-bb13-4a78-a5fd-ac53aa8ddafd.jpg',
         },
         {
             title: 'Trabajo en Equipo',
             description: 'Creemos en el poder de la colaboración y el esfuerzo colectivo.',
             icon: Users,
-            image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&auto=format&fit=crop&q=80',
+            image: 'https://cdn.phototourl.com/free/2026-08-09-ae473ad0-8722-4a2f-983c-68f0b46c9d7e.jpg',
         },
         {
             title: 'Integridad',
             description: 'Actuamos con transparencia y ética en todas nuestras acciones.',
             icon: ShieldCheck,
-            image: 'https://images.unsplash.com/photo-1579202673506-ca3ce28943ef?w=600&auto=format&fit=crop&q=80',
+            image: 'https://cdn.phototourl.com/free/2026-08-09-178458db-9dcd-40c6-8f97-d8bc593d117d.jpg',
         },
         {
             title: 'Pasión',
             description: 'Nos apasiona nuestro trabajo y el impacto que generamos.',
             icon: Flame,
-            image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&auto=format&fit=crop&q=80',
+            image: 'https://cdn.phototourl.com/free/2026-08-09-e4e5d7ff-c8c7-4415-a339-4d41a5e114b1.jpg',
         },
         {
             title: 'Sostenibilidad',
             description: 'Trabajamos por soluciones que perduren en el tiempo.',
             icon: Leaf,
-            image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=600&auto=format&fit=crop&q=80',
+            image: 'https://cdn.phototourl.com/free/2026-08-09-5669c7b7-504d-447b-a65e-08371d9c2073.jpg',
         }
     ];
 
@@ -328,50 +328,75 @@ const values = computed(() => {
     });
 });
 
-// Scrollytelling Pinned Team Presentation Logic
+// Team Card Interactive Presentation Logic (Click, Keyboard, Swipe, Buttons)
 const teamSectionRef = ref<HTMLElement | null>(null);
 const activeCardIndex = ref(0);
 
-const handleScrollPresentation = () => {
-    if (!teamSectionRef.value) {
+const mobileTeamContainerRef = ref<HTMLElement | null>(null);
+const mobileTeamIndex = ref(0);
+let mobileTeamInterval: ReturnType<typeof setInterval> | null = null;
+
+const stepNextTeamSlide = () => {
+    if (!mobileTeamContainerRef.value || window.innerWidth >= 1024 || !mobileTeamContainerRef.value.children.length) {
+        return;
+    }
+
+    const total = mobileTeamContainerRef.value.children.length;
+    mobileTeamIndex.value = (mobileTeamIndex.value + 1) % total;
+    const targetCard = mobileTeamContainerRef.value.children[mobileTeamIndex.value] as HTMLElement;
+
+    if (targetCard) {
+        mobileTeamContainerRef.value.scrollTo({
+            left: targetCard.offsetLeft - mobileTeamContainerRef.value.offsetLeft,
+            behavior: 'smooth'
+        });
+    }
+};
+
+const setMobileCard = (index: number) => {
+    if (!mobileTeamContainerRef.value) {
 return;
 }
 
-    const rect = teamSectionRef.value.getBoundingClientRect();
-    const sectionHeight = rect.height;
-    const viewportHeight = window.innerHeight;
-    
-    // Scrolled distance within the section boundary
-    const scrolledDistance = -rect.top;
-    const totalScrollableDistance = sectionHeight - viewportHeight;
-    
-    if (totalScrollableDistance <= 0) {
-        return;
+    mobileTeamIndex.value = index;
+    const targetCard = mobileTeamContainerRef.value.children[index] as HTMLElement;
+
+    if (targetCard) {
+        mobileTeamContainerRef.value.scrollTo({
+            left: targetCard.offsetLeft - mobileTeamContainerRef.value.offsetLeft,
+            behavior: 'smooth'
+        });
     }
-    
-    let progress = scrolledDistance / totalScrollableDistance;
-    progress = Math.max(0, Math.min(1, progress));
-    
-    // Map progress to card index
-    const index = Math.min(Math.floor(progress * team.value.length), team.value.length - 1);
+};
+
+const nextCard = () => {
+    activeCardIndex.value = (activeCardIndex.value + 1) % team.value.length;
+};
+
+const prevCard = () => {
+    activeCardIndex.value = (activeCardIndex.value - 1 + team.value.length) % team.value.length;
+};
+
+const setCard = (index: number) => {
     activeCardIndex.value = index;
 };
 
-const scrollToCard = (index: number) => {
+// Keyboard listener (Flechas Abajo/Derecha -> Siguiente, Arriba/Izquierda -> Anterior)
+const handleKeyDown = (event: KeyboardEvent) => {
     if (!teamSectionRef.value) {
         return;
     }
 
     const rect = teamSectionRef.value.getBoundingClientRect();
-    const sectionTop = window.scrollY + rect.top;
-    const totalScrollableDistance = rect.height - window.innerHeight;
-    
-    const targetScrollY = sectionTop + (index / (team.value.length - 1 || 1)) * totalScrollableDistance + 10;
-    
-    window.scrollTo({
-        top: targetScrollY,
-        behavior: 'smooth'
-    });
+    const inView = rect.top < window.innerHeight && rect.bottom > 0;
+
+    if (inView) {
+        if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+            nextCard();
+        } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+            prevCard();
+        }
+    }
 };
 
 onMounted(() => {
@@ -391,28 +416,32 @@ onMounted(() => {
     const sections = document.querySelectorAll('.reveal-section');
     sections.forEach((section) => revealObserver.observe(section));
 
-    // Register presentation scroll handler
-    window.addEventListener('scroll', handleScrollPresentation);
-    // Init state
-    handleScrollPresentation();
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Auto-scroll mobile team cards (Slower, 7 seconds)
+    mobileTeamInterval = setInterval(stepNextTeamSlide, 7000);
 });
 
 onUnmounted(() => {
-    window.removeEventListener('scroll', handleScrollPresentation);
+    window.removeEventListener('keydown', handleKeyDown);
+
+    if (mobileTeamInterval) {
+clearInterval(mobileTeamInterval);
+}
 });
 </script>
 
 <template>
     <PublicLayout title="Nosotros">
         <!-- 1. HERO SECTION -->
-        <section 
-            class="relative h-[65vh] min-h-[260px] flex items-center overflow-hidden bg-cover bg-center text-white"
-            style="background-image: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1600&q=80');"
+        <section
+            class="relative h-[60vh] min-h-[350px] flex items-end pb-8 md:items-center md:pb-0 overflow-hidden bg-cover bg-center text-white"
+            style="background-image: url('https://cdn.phototourl.com/free/2026-08-05-2af7bdd7-7eb6-4cca-9c51-1fc58cff7eeb.jpg');"
         >
-            <!-- Gradient Overlay for readability -->
-            <div class="absolute inset-0 bg-gradient-to-r from-neutral-950/90 via-neutral-950/70 to-transparent z-10"></div>
-            
-            <div class="max-w-7xl mx-auto w-full px-6 lg:px-8 text-left relative z-20 space-y-3">
+            <!-- Gradient Overlay (Bottom gradient on mobile, side gradient on desktop) -->
+            <div class="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-transparent md:bg-gradient-to-r md:from-neutral-950/90 md:via-neutral-950/70 md:to-transparent z-10"></div>
+
+            <div class="max-w-7xl mx-auto w-full px-6 lg:px-8 text-left relative z-20 space-y-2 md:space-y-3">
                 <span class="text-xs font-bold uppercase tracking-widest text-blue-400">¿Quiénes Somos?</span>
                 <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">Nosotros</h1>
                 <p class="text-xs md:text-sm text-white/80 max-w-3xl leading-relaxed">
@@ -424,7 +453,7 @@ onUnmounted(() => {
         <!-- 2. MISSION SECTION -->
         <section class="reveal-section py-20 lg:py-28 max-w-7xl mx-auto px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                
+
                 <!-- Left Details -->
                 <div class="lg:col-span-5 space-y-6 text-left">
                     <span class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Propósito Institucional</span>
@@ -439,13 +468,13 @@ onUnmounted(() => {
                 <div class="lg:col-span-7">
                     <div class="relative p-8 md:p-12 rounded-3xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800 text-left overflow-hidden shadow-xs">
                         <div class="absolute -top-10 -left-6 text-neutral-200/40 dark:text-neutral-800/30 text-[180px] font-serif leading-none select-none">“</div>
-                        
+
                         <blockquote class="relative z-10">
                             <p class="text-lg md:text-xl font-medium text-neutral-800 dark:text-neutral-100 leading-relaxed italic">
                                 Formar profesionales y posgraduados competitivos, con capacidad de investigación, emprendimiento, la responsabilidad social e identidad cultural para contribuir al desarrollo humano y desarrollo sostenible de la región y del país.
                             </p>
                         </blockquote>
-                        
+
                         <div class="mt-6 flex items-center gap-3">
                             <div class="h-px w-8 bg-neutral-300 dark:bg-neutral-700"></div>
                             <span class="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
@@ -457,70 +486,126 @@ onUnmounted(() => {
             </div>
         </section>
 
-        <!-- 3. TEAM SECTION (Scrollytelling pinned section) -->
-        <section ref="teamSectionRef" class="relative h-[250vh] lg:h-[350vh] bg-neutral-50/50 dark:bg-neutral-900/10 border-y border-neutral-200/55 dark:border-neutral-800/40">
-            <!-- Pinned Sticky Container (ocupa el alto de pantalla y queda fijo mientras se hace scroll) -->
-            <div class="sticky top-20 h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)] flex items-center justify-center overflow-hidden w-full">
-                <div class="max-w-7xl mx-auto px-6 lg:px-8 w-full">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full relative">
-                        
-                        <!-- Left Column: Sticky Header (centrado verticalmente) -->
-                        <div class="lg:col-span-5 text-left space-y-4 lg:pr-8">
+        <!-- 3. TEAM SECTION (Interactive Team Presentation) -->
+        <section
+            ref="teamSectionRef"
+            class="reveal-section py-20 lg:py-28 bg-neutral-50/50 dark:bg-neutral-900/10 border-y border-neutral-200/55 dark:border-neutral-800/40 select-none"
+        >
+            <div class="max-w-7xl mx-auto px-6 lg:px-8 w-full space-y-8">
+                <!-- Mobile Section Header -->
+                <div class="lg:hidden text-center max-w-3xl mx-auto space-y-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Liderazgo y Gestión</span>
+                    <h2 class="text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">Nuestro Equipo</h2>
+                    <p class="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed font-normal">
+                        Conoce a los profesionales apasionados que lideran el desarrollo social y cultural en la UNA Puno.
+                    </p>
+                </div>
+
+                <!-- Mobile Single-Card Photo Carousel (Fondo Blanco en Claro / Negro en Oscuro, Táctil/Click, Sin Foto Cortada, Recto Normal) -->
+                <div class="lg:hidden w-full max-w-sm sm:max-w-md mx-auto pt-2 space-y-4">
+                    <div ref="mobileTeamContainerRef" class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full scroll-smooth">
+                        <div
+                            v-for="member in team"
+                            :key="member.name"
+                            @click="stepNextTeamSlide"
+                            class="w-full shrink-0 snap-center relative rounded-[2.25rem] overflow-hidden shadow-none border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900 group aspect-[4/5] cursor-pointer p-3 flex flex-col transition-all duration-300"
+                        >
+                            <!-- Inner Photo Frame Box (Con bordes perfectamente redondeados) -->
+                            <div class="w-full h-full rounded-[1.75rem] overflow-hidden bg-neutral-100 dark:bg-neutral-950 relative flex items-end justify-center border border-neutral-200/60 dark:border-neutral-800/60">
+                                <img :src="member.image" :alt="member.name" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105" />
+
+                                <!-- Bottom Glass Overlay with Name & Role (Adaptativo y Redondeado Abajo) -->
+                                <div class="absolute inset-x-0 bottom-0 p-4 rounded-b-[1.75rem] bg-gradient-to-t from-white/95 via-white/85 to-transparent dark:from-neutral-950 dark:via-neutral-950/85 dark:to-transparent backdrop-blur-md flex flex-col items-start text-left space-y-1 z-10 border-t border-black/5 dark:border-white/10">
+                                    <span class="px-2.5 py-1 rounded-full text-[9.5px] font-black uppercase tracking-widest bg-indigo-600 text-white">
+                                        {{ member.role }}
+                                    </span>
+                                    <h3 class="text-base sm:text-lg font-black text-neutral-950 dark:text-white leading-tight">{{ member.name }}</h3>
+                                    <p class="text-xs text-neutral-600 dark:text-neutral-300 font-medium line-clamp-1 opacity-95">{{ member.department }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slide Indicator Dots on Mobile -->
+                    <div class="flex items-center justify-center gap-2">
+                        <span
+                            v-for="(member, i) in team"
+                            :key="i"
+                            @click="setMobileCard(i)"
+                            class="h-2 rounded-full transition-all duration-300 cursor-pointer"
+                            :class="mobileTeamIndex === i ? 'w-6 bg-indigo-600 dark:bg-indigo-400' : 'w-2 bg-neutral-300 dark:bg-neutral-700'"
+                        ></span>
+                    </div>
+                </div>
+
+                <!-- Desktop Interactive Presentation (Hidden on Mobile) -->
+                <div class="hidden lg:grid grid-cols-12 gap-12 items-center w-full pt-6">
+                    <!-- Left Column: Sticky Header & Interactive Member List -->
+                    <div class="col-span-5 text-left space-y-6 pr-4">
+                        <div class="space-y-3">
                             <span class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Liderazgo y Gestión</span>
                             <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white">Nuestro Equipo</h2>
                             <div class="w-12 h-1.5 bg-indigo-600 dark:bg-indigo-400 rounded-full"></div>
                             <p class="text-xs md:text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed font-normal">
                                 Contamos con un equipo multidisciplinario de profesionales apasionados por el cambio social, comprometidos con nuestros valores y enfocados en lograr resultados transformadores para nuestra comunidad universitaria y la región de Puno.
                             </p>
-
-                            <!-- Navigation Dots Indicator -->
-                            <div class="flex items-center gap-2 pt-4">
-                                <button 
-                                    v-for="(member, idx) in team" 
-                                    :key="idx"
-                                    @click="scrollToCard(idx)"
-                                    class="h-2 rounded-full transition-all duration-300 cursor-pointer"
-                                    :class="activeCardIndex === idx ? 'w-8 bg-indigo-600 dark:bg-indigo-400' : 'w-2 bg-neutral-300 dark:bg-neutral-700'"
-                                    :aria-label="'Ver integrante ' + (idx + 1)"
-                                ></button>
-                            </div>
                         </div>
 
-                        <!-- Right Column: Single Card Presentation with Transition Fade -->
-                        <div class="lg:col-span-7 flex items-center justify-center relative h-[450px] w-full">
-                            <template v-for="(member, index) in team" :key="member.name">
-                                <transition name="card-fade">
-                                    <div 
-                                        v-show="activeCardIndex === index"
-                                        class="team-card absolute group shadow-2xl"
-                                        :style="{
-                                            '--glow-shadow': member.glowShadow,
-                                            '--glow-shadow-hover': member.glowShadowHover,
-                                            '--tilt-angle': index % 2 === 0 ? '-2.5deg' : '2.5deg'
-                                        }"
-                                    >
-                                        <!-- Photo Frame Container (No overlays on image, fully visible portrait) -->
-                                        <div class="w-full h-[68%] rounded-2xl overflow-hidden bg-neutral-50 dark:bg-neutral-950 border border-neutral-200/60 dark:border-neutral-800/60 flex items-end justify-center relative">
-                                            <img 
-                                                :src="member.image" 
-                                                :alt="member.name" 
-                                                class="portrait-image" 
-                                            />
-                                        </div>
+                        <div class="space-y-2 pt-2">
+                            <button
+                                v-for="(member, idx) in team"
+                                :key="idx"
+                                @click="setCard(idx)"
+                                class="w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 text-left border-0 cursor-pointer group"
+                                :class="activeCardIndex === idx
+                                    ? 'bg-gradient-to-r from-indigo-500/15 via-indigo-500/10 to-transparent dark:from-indigo-500/25 dark:via-indigo-500/15 dark:to-transparent translate-x-1.5'
+                                    : 'bg-transparent hover:bg-indigo-500/5 dark:hover:bg-indigo-500/10 opacity-75 hover:opacity-100'"
+                            >
+                                <div class="size-10 rounded-xl overflow-hidden bg-neutral-200 dark:bg-neutral-800 shrink-0 border border-neutral-300/40 dark:border-neutral-700/40">
+                                    <img :src="member.image" :alt="member.name" class="w-full h-full object-cover" />
+                                </div>
+                                <div class="flex-grow min-w-0">
+                                    <h4 class="text-xs font-bold text-neutral-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{{ member.name }}</h4>
+                                    <p class="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">{{ member.role }}</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
 
-                                        <!-- Details Area (Below the photo frame, no overlay covering the image) -->
-                                        <div class="w-full pt-4 px-1 flex flex-col items-center text-center">
-                                            <h3 class="name-label leading-tight">{{ member.name }}</h3>
-                                            <span class="inline-block px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-1.5 mt-1.5">
-                                                {{ member.role }}
-                                            </span>
-                                            <p class="subunit-label line-clamp-2 max-w-[90%]">{{ member.department }}</p>
-                                        </div>
+                    <!-- Right Column: Clickable 3D Card Presentation -->
+                    <div class="col-span-7 flex items-center justify-center relative h-[480px] w-full">
+                        <template v-for="(member, index) in team" :key="member.name">
+                            <transition name="card-fade">
+                                <div
+                                    v-show="activeCardIndex === index"
+                                    @click="nextCard"
+                                    class="team-card absolute group shadow-2xl cursor-pointer"
+                                    :style="{
+                                        '--glow-shadow': member.glowShadow,
+                                        '--glow-shadow-hover': member.glowShadowHover,
+                                        '--tilt-angle': index % 2 === 0 ? '-2.5deg' : '2.5deg'
+                                    }"
+                                >
+                                    <!-- Photo Frame Container -->
+                                    <div class="w-full h-[68%] rounded-2xl overflow-hidden bg-neutral-50 dark:bg-neutral-950 border border-neutral-200/60 dark:border-neutral-800/60 flex items-end justify-center relative group-hover:scale-[1.02] transition-transform duration-300">
+                                        <img
+                                            :src="member.image"
+                                            :alt="member.name"
+                                            class="portrait-image"
+                                        />
                                     </div>
-                                </transition>
-                            </template>
-                        </div>
 
+                                    <!-- Details Area -->
+                                    <div class="w-full pt-4 px-1 flex flex-col items-center text-center">
+                                        <h3 class="name-label leading-tight">{{ member.name }}</h3>
+                                        <span class="inline-block px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-1.5 mt-1.5">
+                                            {{ member.role }}
+                                        </span>
+                                        <p class="subunit-label line-clamp-2 max-w-[90%]">{{ member.department }}</p>
+                                    </div>
+                                </div>
+                            </transition>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -529,7 +614,7 @@ onUnmounted(() => {
         <!-- 4. STRATEGIC OBJECTIVES SECTION -->
         <section class="reveal-section py-20 lg:py-28 max-w-7xl mx-auto px-6 lg:px-8 border-t border-neutral-200/50 dark:border-neutral-800/30">
             <div class="space-y-16">
-                
+
                 <!-- Centered Header -->
                 <div class="text-center max-w-3xl mx-auto space-y-4">
                     <span class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Plan de Desarrollo</span>
@@ -541,9 +626,9 @@ onUnmounted(() => {
 
                 <!-- Mobile / Tablet layout (Grid) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 md:hidden">
-                    <div 
-                        v-for="(obj, index) in objectives" 
-                        :key="obj.title" 
+                    <div
+                        v-for="(obj, index) in objectives"
+                        :key="obj.title"
                         class="group relative flex items-start gap-4 p-6 rounded-2xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white/95 dark:bg-neutral-900/60 shadow-sm hover:shadow-md transition-all duration-300 text-left"
                     >
                         <span class="absolute top-4 right-6 text-[10px] font-black text-neutral-300 dark:text-neutral-700 select-none">
@@ -579,9 +664,9 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Dynamic Objective Cards around Center -->
-                    <div 
-                        v-for="(obj, index) in objectives" 
-                        :key="obj.title + '-circular'" 
+                    <div
+                        v-for="(obj, index) in objectives"
+                        :key="obj.title + '-circular'"
                         class="absolute z-10 w-[220px] flex flex-col p-5 bg-white/95 dark:bg-neutral-900/90 border border-neutral-200/80 dark:border-neutral-800/80 rounded-2xl shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-indigo-500/50 dark:hover:border-indigo-400/50 hover:z-30 text-left"
                         :style="getObjectiveStyle(index)"
                     >
@@ -602,7 +687,7 @@ onUnmounted(() => {
         <!-- 5. VALUES SECTION -->
         <section class="reveal-section py-20 bg-neutral-50/50 dark:bg-neutral-900/10 border-t border-neutral-200/55 dark:border-neutral-800/40">
             <div class="max-w-7xl mx-auto px-6 lg:px-8 space-y-16">
-                
+
                 <!-- Section Header -->
                 <div class="text-center max-w-3xl mx-auto space-y-4">
                     <span class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Filosofía de Trabajo</span>
@@ -614,25 +699,25 @@ onUnmounted(() => {
 
                 <!-- Continuous Marquee Carousel for Values -->
                 <div class="relative w-full select-none">
-                    <!-- Ambient fading gradients on the left and right edges for a premium vignette look -->
-                    <div class="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-neutral-50 dark:from-neutral-900 to-transparent z-10 pointer-events-none"></div>
-                    <div class="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-neutral-50 dark:from-neutral-900 to-transparent z-10 pointer-events-none"></div>
+                    <!-- Ambient fading gradients on the left and right edges for a premium vignette look (Hidden on mobile) -->
+                    <div class="hidden md:block absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-neutral-50 dark:from-neutral-900 to-transparent z-10 pointer-events-none"></div>
+                    <div class="hidden md:block absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-neutral-50 dark:from-neutral-900 to-transparent z-10 pointer-events-none"></div>
 
                     <!-- Marquee Track Wrapper (With vertical padding to prevent 3D flip scale clipping) -->
                     <div class="marquee-wrapper flex w-full overflow-hidden py-12">
                         <div class="marquee-track flex gap-8 animate-marquee">
-                            
+
                             <!-- Duplicate items once so the marquee loop is seamless -->
-                            <div 
-                                v-for="(val, index) in [...values, ...values]" 
-                                :key="val.title + '-' + index" 
+                            <div
+                                v-for="(val, index) in [...values, ...values]"
+                                :key="val.title + '-' + index"
                                 class="value-placard-container flex flex-col items-center shrink-0 w-[260px] h-[310px]"
                                 :style="{ '--label-tilt': index % 2 === 0 ? '-3.5deg' : '3.5deg' }"
                             >
                                 <!-- The Placard Card with 3D Flip capability (Larger, h-[310px]) -->
                                 <div class="value-card w-full h-[310px] relative z-10">
                                     <div class="card-inner w-full h-full">
-                                        
+
                                         <!-- FRONT SIDE -->
                                         <div class="card-front bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 shadow-md">
                                             <!-- Top Portion: Tilted Color Label for Icon & Title only (shorter, h-[30%], text-[14px]) -->
@@ -654,10 +739,10 @@ onUnmounted(() => {
 
                                             <!-- Bottom Portion: Photograph Image (Larger, h-[70%], straight, no tilt) -->
                                             <div class="h-[70%] w-full overflow-hidden relative z-10 rounded-b-3xl">
-                                                <img 
-                                                    :src="val.image" 
-                                                    :alt="val.title" 
-                                                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                                                <img
+                                                    :src="val.image"
+                                                    :alt="val.title"
+                                                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                 />
                                                 <div class="absolute inset-0 bg-neutral-950/10 pointer-events-none"></div>
                                             </div>
@@ -690,17 +775,17 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* Scroll Reveal animation for about sections */
+/* Scroll Reveal animation for about sections (notoria al bajar y subir) */
 .reveal-section {
   opacity: 0;
-  transform: translateY(35px);
-  transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(50px) scale(0.97);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
 }
 
 .reveal-section.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 /* ===== PORTRAIT PHOTO STYLE (REAL PICTURE FRAME EDITION) ===== */
@@ -715,7 +800,7 @@ onUnmounted(() => {
   background: #ffffff;
   /* Thick white border like a real photo frame */
   border: 12px solid #ffffff;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
               0 0 0 1px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
@@ -730,7 +815,7 @@ onUnmounted(() => {
 .dark .team-card {
   background: #18181b;
   border: 12px solid #18181b;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
               0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
@@ -756,7 +841,7 @@ onUnmounted(() => {
 
 .name-label {
   margin: 0;
-  font-size: 1.05rem; 
+  font-size: 1.05rem;
   font-weight: 850;
   color: #0f172a;
   letter-spacing: -0.3px;
@@ -771,7 +856,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 0.68rem;
   font-weight: 500;
-  color: #64748b; 
+  color: #64748b;
   line-height: 1.3;
 }
 

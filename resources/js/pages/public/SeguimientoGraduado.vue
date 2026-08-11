@@ -22,13 +22,13 @@ const handleSubscribe = (e: Event) => {
     <PublicLayout title="Seguimiento al Graduado">
         <!-- Hero Header -->
         <section 
-            class="relative h-[65vh] min-h-[260px] flex items-center overflow-hidden bg-cover bg-center text-white"
-            style="background-image: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1600&q=80');"
+            class="relative h-[60vh] min-h-[350px] flex items-end pb-8 md:items-center md:pb-0 overflow-hidden bg-cover bg-center text-white"
+            style="background-image: url('https://cdn.phototourl.com/free/2026-08-05-2af7bdd7-7eb6-4cca-9c51-1fc58cff7eeb.jpg');"
         >
-            <!-- Gradient Overlay for readability -->
-            <div class="absolute inset-0 bg-gradient-to-r from-neutral-950/90 via-neutral-950/70 to-transparent z-10"></div>
+            <!-- Gradient Overlay (Bottom gradient on mobile, side gradient on desktop) -->
+            <div class="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-transparent md:bg-gradient-to-r md:from-neutral-950/90 md:via-neutral-950/70 md:to-transparent z-10"></div>
             
-            <div class="max-w-7xl mx-auto w-full px-6 lg:px-8 text-left relative z-20 space-y-3">
+            <div class="max-w-7xl mx-auto w-full px-6 lg:px-8 text-left relative z-20 space-y-2 md:space-y-3">
                 <span class="text-xs font-bold uppercase tracking-widest text-blue-400">Sub Unidad</span>
                 <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">Seguimiento al Graduado</h1>
                 <p class="text-xs md:text-sm text-white/80 max-w-3xl leading-relaxed">
@@ -59,7 +59,7 @@ const handleSubscribe = (e: Event) => {
                     </div>
                     
                     <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
-                        Portal del Egresado (Próximamente)
+                        Portal del Egresado
                     </h2>
                     
                     <p class="text-neutral-500 dark:text-neutral-400 text-sm leading-relaxed">

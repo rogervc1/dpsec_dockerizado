@@ -79,8 +79,8 @@ const stats = computed(() => {
     ];
 });
 
-// Map DB events to template-friendly format
-const latestActivities = computed(() => (props.events ?? []).map(e => ({
+// Map DB events to template-friendly format (Máximo 3 actividades)
+const latestActivities = computed(() => (props.events ?? []).slice(0, 3).map(e => ({
     ...e,
     image: e.image_path,
     date: e.event_date ? new Date(e.event_date).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
@@ -99,7 +99,7 @@ const documents = computed(() => {
             date: d.published_date ? new Date(d.published_date).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
             size: d.file_size || 'N/A',
             description: d.description,
-            file_path: d.file_path ? (d.file_path.startsWith('http') ? d.file_path : (d.file_path.startsWith('/') ? d.file_path : '/storage/' + d.file_path)) : '#'
+            file_path: d.file_path ? (d.file_path.startsWith('http') ? d.file_path : '/storage/' + d.file_path) : '#'
         }));
     }
 
@@ -119,8 +119,8 @@ return list;
 }
 
     return [
-        'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=2048&q=80',
-        'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=2048&q=80'
+        'https://scontent.fjul1-1.fna.fbcdn.net/v/t39.30808-6/599715893_884448530603047_8830935029040207180_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1365&ctp=s2048x1365&_nc_cat=105&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeHQTG8nj3AVQPEHA1wTgQHYKeP-NFCKFbkp4_40UIoVuSWAiJSKTpXbty2XufqHJ3TjfkBChQkMKeic-hENsQFS&_nc_ohc=y0aeGiZKoI8Q7kNvwHlWwdS&_nc_oc=AdrAcbj07hIEXl4hMGQ0WxmZ3uxiOjPk3rSDXBstr9iXtNUKrJ_uMeBgXLuI-L3q0iQ&_nc_zt=23&_nc_ht=scontent.fjul1-1.fna&_nc_gid=4KCvHQKz0MhLi4lQ3kNatQ&_nc_ss=7b2a8&oh=00_AQCPYaYVBsK7Adxqddq_DlU6zk0tr2nCG3amFSJjCR6x5g&oe=6A547587',
+        'https://scontent.fjul1-1.fna.fbcdn.net/v/t39.30808-6/605296083_769669972809513_1888138256417761411_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1267&ctp=s2048x1267&_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeErCVDX-2bhd-oXj91oxi8uP3zmIbV9bRQ_fOYhtX1tFEc26QCfmlKGVmIt8eHzOj4lP3fH8TmfbOE-Qa7r3CBf&_nc_ohc=y4O89CSTX3kQ7kNvwPldty&_nc_oc=AdpXVqBXvCSHpZcxdtDOuOmzbcQxOARxVFWoV-b-eBj1cMdhr10LjIsIwnH7cQ57iro&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=A_T1_6T7cM_y5_u4_9f2_1&_nc_ss=7b290&oh=00_AQAIEfjqOqi6lNXRJGchTrJDiR7lgLTCn1Tsr0u-PBGCMQ&oe=6A55939C'
     ];
 });
 
@@ -136,19 +136,19 @@ const subunitsFloating = computed(() => {
 
     return [
         {
-            name: 'Proyección Social y Extensión Cultural',
+            name: 'Proyección Social y Extensión Universitaria',
             fbUrl: 'https://www.facebook.com/p/Direcci%C3%B3n-de-Proyecci%C3%B3n-Social-y-Extensi%C3%B3n-Cultural-UNA-Puno-100071137256988/',
             logo: 'https://cdn.phototourl.com/free/2026-07-31-f705bacb-02f5-4ea3-aeed-7e4e724a1d9b.png'
         },
         {
             name: 'Gestión Ambiental',
             fbUrl: 'https://www.facebook.com/p/Gesti%C3%B3n-Ambiental-UNA-PUNO-Oficial-61552848737780/',
-            logo: 'https://cdn.phototourl.com/free/2026-07-31-466e4242-9697-4d02-a2a8-8bb38185b202.jpg'
+            logo: 'https://cdn.phototourl.com/free/2026-07-31-aaa207df-3d13-45da-8947-299c143f1f7b.jpg'
         },
         {
-            name: 'Seguimiento del Graduado',
+            name: 'Seguimiento y Desarrollo del Graduado',
             fbUrl: 'https://www.facebook.com/p/Egresados-y-Graduados-UNA-Puno-100092995523250/',
-            logo: 'https://cdn.phototourl.com/free/2026-07-31-aaa207df-3d13-45da-8947-299c143f1f7b.jpg'
+            logo: 'https://cdn.phototourl.com/free/2026-07-31-466e4242-9697-4d02-a2a8-8bb38185b202.jpg'
         }
     ];
 });
@@ -199,6 +199,35 @@ const handleScroll = () => {
     showFloatingBar.value = isPastHero && !collidesWithFooter;
 };
 
+const activitiesContainerRef = ref<HTMLElement | null>(null);
+const videosContainerRef = ref<HTMLElement | null>(null);
+const statsContainerRef = ref<HTMLElement | null>(null);
+
+const activitiesIndex = ref(0);
+const videosIndex = ref(0);
+const statsIndex = ref(0);
+
+let activitiesInterval: ReturnType<typeof setInterval> | null = null;
+let videosInterval: ReturnType<typeof setInterval> | null = null;
+let statsInterval: ReturnType<typeof setInterval> | null = null;
+
+const stepNextSlide = (container: HTMLElement | null, currentIndexRef: { value: number }) => {
+    if (!container || window.innerWidth >= 768 || !container.children.length) {
+return;
+}
+
+    const totalCards = container.children.length;
+    currentIndexRef.value = (currentIndexRef.value + 1) % totalCards;
+    const targetCard = container.children[currentIndexRef.value] as HTMLElement;
+
+    if (targetCard) {
+        container.scrollTo({
+            left: targetCard.offsetLeft - container.offsetLeft,
+            behavior: 'smooth'
+        });
+    }
+};
+
 onMounted(() => {
     timer = setInterval(() => {
         currentSlide.value = (currentSlide.value + 1) % slides.value.length;
@@ -206,7 +235,12 @@ onMounted(() => {
 
     window.addEventListener('scroll', handleScroll);
 
-    // Scroll Reveal Intersection Observer (always active)
+    // Auto-scroll mobile sliders sequentially (Card 1 -> Card 2 -> Card 3 -> Card 1)
+    activitiesInterval = setInterval(() => stepNextSlide(activitiesContainerRef.value, activitiesIndex), 4500);
+    videosInterval = setInterval(() => stepNextSlide(videosContainerRef.value, videosIndex), 5000);
+    statsInterval = setInterval(() => stepNextSlide(statsContainerRef.value, statsIndex), 5500);
+
+    // Scroll Reveal Intersection Observer (active on scroll down and scroll up)
     const revealObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
@@ -216,7 +250,7 @@ onMounted(() => {
             }
         });
     }, {
-        threshold: 0.08, // trigger when 8% is visible
+        threshold: 0.12, // trigger when 12% is visible
         rootMargin: '0px 0px -40px 0px'
     });
 
@@ -229,6 +263,18 @@ onUnmounted(() => {
         clearInterval(timer);
     }
 
+    if (activitiesInterval) {
+clearInterval(activitiesInterval);
+}
+
+    if (videosInterval) {
+clearInterval(videosInterval);
+}
+
+    if (statsInterval) {
+clearInterval(statsInterval);
+}
+
     window.removeEventListener('scroll', handleScroll);
 });
 </script>
@@ -236,54 +282,60 @@ onUnmounted(() => {
 <template>
     <PublicLayout title="Inicio">
         <section
-            class="relative h-[calc(100vh-96px)] min-h-[500px] flex items-center overflow-hidden bg-neutral-950 text-white">
-            <!-- Background Images Carousel -->
-            <div class="absolute inset-0 z-0">
+            class="relative flex flex-col md:flex-row md:items-center overflow-hidden bg-neutral-950 text-white h-[calc(100vh-136px)] md:h-[calc(100vh-96px)] min-h-[480px]">
+            <!-- Top 58% Image Carousel Block on Mobile, Full-Screen Overlay on Desktop -->
+            <div class="h-[58%] md:h-full w-full relative md:absolute md:inset-0 z-0 overflow-hidden shrink-0">
                 <transition-group name="fade">
                     <div v-for="(slide, index) in slides" v-show="currentSlide === index" :key="slide"
                         class="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out transform scale-105"
                         :style="{ backgroundImage: `url(${slide})` }"></div>
                 </transition-group>
-                <!-- Dark Overlay to ensure high contrast/readability -->
+                <!-- Dark Overlay for Desktop -->
                 <div
-                    class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-transparent dark:from-black/95 dark:via-black/80 dark:to-transparent z-10">
+                    class="hidden md:block absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-transparent dark:from-black/95 dark:via-black/80 dark:to-transparent z-10">
                 </div>
             </div>
 
-            <!-- Content Area -->
-            <div class="max-w-7xl mx-auto px-6 lg:px-8 w-full relative z-20">
-                <div class="max-w-3xl space-y-6 text-left">
+            <!-- Bottom 42% Glassmorphism Text & Buttons Block on Mobile, Clean Non-Glass Text Block on Desktop -->
+            <div class="h-[42%] md:h-auto w-full max-md:bg-neutral-950/40 max-md:backdrop-blur-xl max-md:border-t max-md:border-white/20 max-md:shadow-2xl md:bg-transparent md:backdrop-blur-none md:border-0 md:shadow-none px-0 py-0 sm:px-6 md:px-8 max-w-7xl mx-auto flex flex-col justify-between shrink-0 z-20 md:my-auto">
+                <div class="w-full h-full flex flex-col justify-between text-left space-y-1 md:space-y-6">
+                    <!-- Taller Square Badge on Mobile (Glass Tinted), Clean Solid Badge on Desktop -->
                     <div
-                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider border border-indigo-500/30">
-                        <TrendingUp class="size-3.5" />
-                        <span>Compromiso Social y Cultural</span>
+                        class="w-full md:w-fit flex md:inline-flex items-center gap-2.5 px-4 py-3 md:py-1.5 rounded-none md:rounded-full max-md:bg-indigo-500/35 max-md:backdrop-blur-md md:bg-indigo-600/90 md:backdrop-blur-none text-indigo-100 text-xs sm:text-sm font-black md:font-semibold uppercase tracking-wider border-l-4 border-indigo-400 border-y border-r border-white/20 md:border md:border-indigo-400/40 shadow-sm shrink-0">
+                        <TrendingUp class="size-5 shrink-0 text-indigo-300 md:text-white" />
+                        <span class="truncate">Compromiso Social y Cultural</span>
                     </div>
 
-                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] text-white">
-                        Conectando la <span
-                            class="bg-gradient-to-r from-indigo-400 via-blue-400 to-indigo-300 bg-clip-text text-transparent">Universidad</span>
-                        con nuestra Sociedad
-                    </h1>
+                    <!-- Inner Container with side padding (px-4) for Heading & Description on Mobile -->
+                    <div class="px-4 md:px-0 space-y-2 md:space-y-4 my-auto">
+                        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black md:font-extrabold tracking-tight leading-tight md:leading-[1.1] text-white drop-shadow-md">
+                            Conectando la <span
+                                class="bg-gradient-to-r from-indigo-400 via-blue-400 to-indigo-300 bg-clip-text text-transparent">Universidad</span>
+                            <br class="hidden md:block" />
+                            con nuestra Sociedad
+                        </h1>
 
-                    <p class="text-lg text-neutral-300 leading-relaxed max-w-2xl">
-                        La Dirección de Proyección Social y Extensión Cultural de la UNA Puno lidera programas
-                        integradores, voluntariados, preservación del patrimonio cultural altiplánico y proyectos
-                        sostenibles para el desarrollo regional.
-                    </p>
+                        <p class="text-xs sm:text-sm md:text-lg text-neutral-100 leading-normal md:leading-relaxed max-w-2xl font-semibold md:font-normal line-clamp-3 md:line-clamp-none drop-shadow-xs">
+                            La Dirección de Proyección Social y Extensión Cultural de la UNA Puno lidera programas
+                            integradores, voluntariados, preservación del patrimonio cultural altiplánico y proyectos
+                            sostenibles para el desarrollo regional.
+                        </p>
+                    </div>
 
-                    <div class="flex flex-wrap gap-4 pt-2">
-                        <Link href="/proyeccion-social">
+                    <!-- Taller Side-By-Side Edge-To-Edge Buttons on Mobile (h-13, font-black, size-5 icons), Original Flex Buttons on Desktop -->
+                    <div class="grid grid-cols-2 md:flex md:flex-wrap gap-0 md:gap-4 pt-0 md:pt-2 w-full md:w-auto shrink-0">
+                        <Link href="/proyeccion-social" class="w-full md:w-auto">
                             <Button
-                                class="rounded-xl h-12 px-6 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 transition-all font-semibold flex items-center gap-2 cursor-pointer border-0">
-                                Ver Actividades
-                                <ArrowRight class="size-4" />
+                                class="w-full md:w-auto rounded-none md:rounded-xl h-13 md:h-12 px-2 md:px-6 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 transition-all text-xs sm:text-sm md:text-base font-black md:font-semibold flex items-center justify-center md:justify-start gap-2 cursor-pointer border-0 border-r border-indigo-700/50 md:border-r-0">
+                                <span class="truncate">Ver Actividades</span>
+                                <ArrowRight class="size-5 shrink-0" />
                             </Button>
                         </Link>
-                        <Link href="/documentos">
+                        <Link href="/documentos" class="w-full md:w-auto">
                             <Button variant="outline"
-                                class="rounded-xl h-12 px-6 border-white/20 bg-white/5 text-white hover:bg-white/10 font-semibold flex items-center gap-2 cursor-pointer">
-                                <FileText class="size-4 text-indigo-300" />
-                                Normativas y Guías
+                                class="w-full md:w-auto rounded-none md:rounded-xl h-13 md:h-12 px-2 md:px-6 border-0 md:border border-white/30 md:border-white/20 bg-white/15 md:bg-white/10 text-white hover:bg-white/25 md:hover:bg-white/20 transition-all text-xs sm:text-sm md:text-base font-black md:font-semibold flex items-center justify-center md:justify-start gap-2 cursor-pointer max-md:backdrop-blur-md md:backdrop-blur-none">
+                                <FileText class="size-5 text-indigo-300 shrink-0" />
+                                <span class="truncate">Normativas y Guías</span>
                             </Button>
                         </Link>
                     </div>
@@ -294,34 +346,25 @@ onUnmounted(() => {
 
 
         <!-- 2. FEATURED LATEST ACTIVITIES (Inspriado de Facebook) -->
-        <section class="reveal-section py-20 lg:py-28">
+        <section class="reveal-section py-20 lg:py-28 bg-neutral-50/80 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/40">
             <div class="max-w-7xl mx-auto px-6 lg:px-8 space-y-12">
 
                 <!-- Section Header -->
-                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div class="space-y-3 text-left">
-                        <span
-                            class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Noticias
-                            y Publicaciones</span>
-                        <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Actividades Recientes</h2>
-                        <p class="text-neutral-500 dark:text-neutral-400 max-w-xl text-sm md:text-base">
-                            Mantente al día con los últimos eventos, campañas de voluntariado y proyectos de proyección
-                            social publicados en nuestros canales oficiales.
-                        </p>
-                    </div>
-                    <Link href="/eventos">
-                        <Button variant="ghost"
-                            class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold group flex items-center gap-1 cursor-pointer">
-                            Ver mas Actividades
-                            <ChevronRight class="size-4 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                    </Link>
+                <div class="text-center max-w-2xl mx-auto space-y-3">
+                    <span
+                        class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Noticias
+                        y Publicaciones</span>
+                    <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Actividades Recientes</h2>
+                    <p class="text-neutral-500 dark:text-neutral-400 text-sm md:text-base">
+                        Mantente al día con los últimos eventos, campañas de voluntariado y proyectos de proyección
+                        social publicados en nuestros canales oficiales.
+                    </p>
                 </div>
 
-                <!-- Activities Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Activities Horizontal Slider on Mobile, Grid on Desktop (Auto-scroll & manual swipeable) -->
+                <div ref="activitiesContainerRef" class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar space-x-4 pb-4 px-1 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:space-x-0 md:pb-0 md:gap-8 scroll-smooth">
                     <div v-for="activity in latestActivities" :key="activity.id"
-                        class="group relative flex flex-col bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                        class="w-[85vw] sm:w-[320px] md:w-auto shrink-0 snap-center group relative flex flex-col bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                         @click="openActivityModal(activity)">
                         <!-- Image Section -->
                         <div class="h-52 relative overflow-hidden bg-neutral-150 dark:bg-neutral-950 shrink-0">
@@ -378,11 +421,22 @@ onUnmounted(() => {
                         </div>
                     </div>
                 </div>
+
+                <!-- Centered "Ver más Actividades" Button Below Grid -->
+                <div class="flex justify-center pt-2">
+                    <Link href="/eventos">
+                        <Button variant="outline"
+                            class="rounded-xl border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-indigo-600 dark:text-indigo-400 font-semibold group flex items-center gap-2 px-6 py-2.5 cursor-pointer shadow-xs">
+                            Ver más Actividades
+                            <ArrowRight class="size-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                    </Link>
+                </div>
             </div>
         </section>
 
         <!-- VIDEOS SECTOR (YOUTUBE EMBEDS) -->
-        <section class="reveal-section py-20 border-t border-neutral-200/50 dark:border-neutral-800/30">
+        <section class="reveal-section py-20 lg:py-28 bg-white dark:bg-neutral-950">
             <div class="max-w-7xl mx-auto px-6 lg:px-8 space-y-12">
                 <div class="text-center max-w-2xl mx-auto space-y-3">
                     <span
@@ -395,10 +449,11 @@ onUnmounted(() => {
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Videos Horizontal Slider on Mobile, Grid on Desktop (Auto-scroll & manual swipeable) -->
+                <div ref="videosContainerRef" class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar space-x-4 pb-4 px-1 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:space-x-0 md:pb-0 md:gap-8 scroll-smooth">
                     <!-- Dynamic Videos -->
                     <div v-for="vid in mappedVideos" :key="vid.id"
-                        class="group relative flex flex-col bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+                        class="w-[85vw] sm:w-[320px] md:w-auto shrink-0 snap-center group relative flex flex-col bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
                         <div class="relative aspect-video overflow-hidden bg-neutral-950">
                             <iframe class="w-full h-full border-0" :src="vid.embedUrl"
                                 :title="vid.title"
@@ -438,15 +493,15 @@ onUnmounted(() => {
             </div>
         </section>
 
-        <!-- 3. QUICK OFFICE ACCESS DIRECTORY -->
+        <!-- 3. DIRECTORY OF SUBUNIDADES -->
         <section
-            class="reveal-section py-20 bg-neutral-50/50 dark:bg-neutral-900/10 border-t border-neutral-200/50 dark:border-neutral-800/30">
+            class="reveal-section py-20 lg:py-28 bg-neutral-50/80 dark:bg-neutral-900/40 border-y border-neutral-200/60 dark:border-neutral-800/40">
             <div class="max-w-7xl mx-auto px-6 lg:px-8 space-y-12">
                 <div class="text-center max-w-2xl mx-auto space-y-3">
                     <span
                         class="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Directorio
-                        de Sub-Unidades</span>
-                    <h2 class="text-3xl font-extrabold tracking-tight">Accede a nuestras Sub-Unidades</h2>
+                        de Sub Unidades</span>
+                    <h2 class="text-3xl font-extrabold tracking-tight">Accede a nuestras Sub Unidades</h2>
                     <p class="text-neutral-500 dark:text-neutral-400 text-sm">
                         Conoce las dependencias que forman parte de la Dirección de Proyección Social y Extensión
                         Cultural.
@@ -463,16 +518,16 @@ onUnmounted(() => {
                                 <Award class="size-6" />
                             </div>
                             <h3 class="text-xl font-bold text-neutral-950 dark:text-white">Proyección Social y Extensión
-                                Cultural</h3>
+                                Universitaria</h3>
                             <p class="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
                                 Foco principal de gestión. Coordina y aprueba proyectos sociales, prácticas en
                                 comunidades y eventos culturales impulsados por las facultades.
                             </p>
                         </div>
                         <Link href="/proyeccion-social" class="pt-4 block">
-                            <Button
-                                class="w-full rounded-xl bg-neutral-950 hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100 flex items-center justify-center gap-2 cursor-pointer">
-                                Ver Actividades
+                            <Button variant="outline"
+                                class="w-full rounded-xl flex items-center justify-center gap-2 border-neutral-300 dark:border-neutral-700 cursor-pointer">
+                                Más información
                                 <ArrowRight class="size-4" />
                             </Button>
                         </Link>
@@ -495,26 +550,21 @@ onUnmounted(() => {
                         <a href="https://www.unap.edu.pe" target="_blank" rel="noopener noreferrer" class="pt-4 block">
                             <Button variant="outline"
                                 class="w-full rounded-xl flex items-center justify-center gap-2 border-neutral-300 dark:border-neutral-700 cursor-pointer">
-                                Visitar Sitio Web
+                                Más información
                                 <ExternalLink class="size-4 text-neutral-500" />
                             </Button>
                         </a>
                     </div>
 
-                    <!-- Card 3: Seguimiento al Graduado -->
+                    <!-- Card 3: Seguimiento y Desarrollo del Graduado -->
                     <div
-                        class="p-8 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 shadow-xs space-y-5 text-left flex flex-col h-full justify-between opacity-85 hover:opacity-100 transition-opacity">
+                        class="p-8 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 shadow-xs space-y-5 text-left flex flex-col h-full justify-between">
                         <div class="space-y-4">
                             <div
                                 class="size-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                                 <Users class="size-6" />
                             </div>
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-xl font-bold text-neutral-950 dark:text-white">Seguimiento al Graduado
-                                </h3>
-                                <span
-                                    class="text-[9px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">Próximamente</span>
-                            </div>
+                            <h3 class="text-xl font-bold text-neutral-950 dark:text-white">Seguimiento y Desarrollo del Graduado</h3>
                             <p class="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
                                 Plataforma futura de inserción laboral, encuestas de egresados y contacto con las redes
                                 de exalumnos de la UNA Puno.
@@ -523,7 +573,7 @@ onUnmounted(() => {
                         <Link href="/seguimiento-graduado" class="pt-4 block">
                             <Button variant="outline"
                                 class="w-full rounded-xl flex items-center justify-center gap-2 border-neutral-300 dark:border-neutral-700 cursor-pointer">
-                                Conoce Más
+                                Más información
                                 <ArrowRight class="size-4" />
                             </Button>
                         </Link>
@@ -533,7 +583,7 @@ onUnmounted(() => {
         </section>
 
         <!-- 4. RECENT DOCUMENTS PREVIEW -->
-        <section class="reveal-section py-20">
+        <section class="reveal-section py-20 lg:py-28 bg-white dark:bg-neutral-950">
             <div class="max-w-7xl mx-auto px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
                 <!-- Left Details -->
@@ -585,11 +635,12 @@ onUnmounted(() => {
 
         <!-- 5. STATS SECTION (GLASSMORPHIC CARDS) -->
         <section
-            class="reveal-section py-12 border-y border-neutral-200/55 dark:border-neutral-800/40 bg-neutral-50/50 dark:bg-neutral-900/10">
+            class="reveal-section py-16 bg-neutral-50/80 dark:bg-neutral-900/40 border-y border-neutral-200/60 dark:border-neutral-800/40">
             <div class="max-w-7xl mx-auto px-6 lg:px-8">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Stats Horizontal Slider on Mobile, Grid on Desktop (Auto-scroll & manual swipeable) -->
+                <div ref="statsContainerRef" class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar space-x-4 pb-2 px-1 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:space-x-0 md:pb-0 md:gap-6 scroll-smooth">
                     <div v-for="stat in stats" :key="stat.label"
-                        class="p-6 rounded-2xl bg-white dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xs flex items-start gap-4 hover:shadow-md transition-shadow">
+                        class="w-[75vw] sm:w-[260px] md:w-auto shrink-0 snap-center p-6 rounded-2xl bg-white dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 shadow-xs flex items-start gap-4 hover:shadow-md transition-shadow">
                         <div class="p-3 rounded-xl shrink-0" :class="stat.color">
                             <component :is="stat.icon" class="size-6" />
                         </div>
@@ -782,17 +833,17 @@ onUnmounted(() => {
     opacity: 0;
 }
 
-/* Scroll Reveal animation for home sections */
+/* Scroll Reveal animation for home sections (notoria al bajar y subir) */
 .reveal-section {
     opacity: 0;
-    transform: translateY(35px);
-    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(50px) scale(0.97);
+    transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform, opacity;
 }
 
 .reveal-section.is-visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 /* Modal Transition Animations */
@@ -815,5 +866,14 @@ onUnmounted(() => {
 .modal-leave-to .relative {
     transform: scale(0.92) translateY(20px);
     opacity: 0;
+}
+
+/* Hide scrollbar for clean mobile sliding */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 </style>
