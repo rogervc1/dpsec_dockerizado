@@ -1,41 +1,81 @@
-# DPESEC Web — Dirección de Proyección Social y Extensión Cultural (UNA Puno)
+# DPSEC Web - Direccion de Proyeccion Social y Extension Cultural
 
-Este es el sistema web oficial para la **Dirección de Proyección Social y Extensión Cultural (DPESEC)** de la Universidad Nacional del Altiplano (UNA Puno). El proyecto está construido bajo una arquitectura moderna utilizando Laravel como Backend e Inertia.js con Vue 3 en el Frontend.
+Sistema web para la Direccion de Proyeccion Social y Extension Cultural de la Universidad Nacional del Altiplano de Puno.
 
----
+El proyecto usa Laravel, Inertia.js, Vue 3, TypeScript, Tailwind CSS y Vite. Incluye sitio publico, panel administrativo, gestion de eventos/documentos y modulo de certificados.
 
-## 🛠️ Stack Tecnológico
-* **Backend**: Laravel 11+
-* **Frontend**: Vue 3 (Composition API con `<script setup lang="ts">`)
-* **Puente**: Inertia.js (SPA de alto rendimiento sin recargas de página)
-* **Estilos**: Tailwind CSS con base en Shadcn UI / Radix UI
-* **Lenguaje**: TypeScript
-* **Compilador**: Vite
+## Requisitos
 
----
+Antes de levantar el proyecto instala:
 
-## ⚙️ Guía de Inicialización del Proyecto
+- PHP 8.3 o superior.
+- Composer 2.
+- Node.js 22 o superior y npm.
+- MySQL 8 o MariaDB compatible.
+- Git.
 
-Sigue estos pasos para instalar y ejecutar el proyecto en tu entorno local (ej. Laragon o servidor apache local):
+Extensiones PHP recomendadas:
 
-### 1. Clonar e Instalar Dependencias
-Instala los paquetes de PHP y las dependencias de Node.js en la raíz del proyecto:
+- `pdo_mysql`
+- `mbstring`
+- `openssl`
+- `fileinfo`
+- `gd`
+- `zip`
+- `xml`
+- `curl`
+
+En Windows puedes usar Laragon, XAMPP o PHP instalado manualmente. Si usas Laragon, confirma que la terminal usa PHP 8.3+ con:
+
 ```bash
-# Instalar dependencias de PHP
-composer install
+php -v
+composer -V
+node -v
+npm -v
+```
 
-# Instalar dependencias de Javascript
+## Instalacion Local
+
+### 1. Clonar el repositorio
+
+```bash
+git clone <url-del-repositorio>
+cd oscar_server_DPSEC
+```
+
+### 2. Instalar dependencias
+
+```bash
+composer install
 npm install
 ```
 
-### 2. Configurar el Entorno (.env)
-Duplica el archivo `.env.example` y renómbralo a `.env`:
+En PowerShell, si `npm run ...` falla por politica de ejecucion de scripts, usa `npm.cmd`:
+
+```bash
+npm.cmd install
+```
+
+### 3. Crear el archivo `.env`
+
 ```bash
 copy .env.example .env
 ```
 
-Abre el archivo `.env` y configura tu base de datos:
+En Linux/macOS o Git Bash:
+
+```bash
+cp .env.example .env
+```
+
+Configura la conexion a base de datos en `.env`:
+
 ```env
+APP_NAME="DPSEC Web"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8000
+
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -44,115 +84,322 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-### 3. Generar la Clave de la Aplicación
+Crea la base de datos `dpesec` en MySQL antes de migrar.
+
+### 4. Generar clave de aplicacion
+
 ```bash
 php artisan key:generate
 ```
 
-### 4. Ejecutar Migraciones
-Crea la base de datos `dpesec` en tu gestor (ej. phpMyAdmin / HeidiSQL) y corre las migraciones:
+### 5. Crear tablas y datos iniciales
+
 ```bash
-php artisan migrate
+php artisan migrate --seed
 ```
 
-### 5. Levantar Servidores de Desarrollo
-Debes ejecutar ambos comandos en terminales separadas para habilitar el Hot Reload en caliente:
-```bash
-# Iniciar servidor local PHP (Laravel)
-php artisan serve
+Los seeders cargan datos iniciales para:
 
-# Iniciar servidor local de compilación (Vite + Vue 3)
+- eventos
+- documentos
+- equipo
+- objetivos
+- valores institucionales
+- videos
+- preguntas frecuentes
+- estadisticas
+- subunidades
+- secciones de pagina
+
+Tambien se crea un usuario inicial:
+
+```text
+Email: test@example.com
+Password: password
+```
+
+### 6. Crear enlace de almacenamiento publico
+
+```bash
+php artisan storage:link
+```
+
+Este paso es necesario para que Laravel sirva archivos subidos desde `storage/app/public` mediante `/storage`.
+
+### 7. Levantar el proyecto
+
+Opcion recomendada, usando el script de Composer:
+
+```bash
+composer dev
+```
+
+Ese comando levanta en paralelo:
+
+- servidor Laravel (`php artisan serve`)
+- cola (`php artisan queue:listen --tries=1`)
+- Vite (`npm run dev`)
+
+Si prefieres terminales separadas:
+
+```bash
+php artisan serve
+php artisan queue:listen --tries=1
 npm run dev
 ```
 
----
+En PowerShell puedes usar:
 
-## 📂 Estructura Clave del Frontend
-
-Toda la lógica de vistas del sitio público y administrativo se encuentra estructurada en `resources/js/`:
-
-* **`resources/js/pages/public/` (Vistas Públicas)**:
-  * [Home.vue](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/pages/public/Home.vue): Página de inicio. Incluye un carrusel dinámico, actividades destacadas y sección de videos de YouTube integrados.
-  * [AboutUs.vue](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/pages/public/AboutUs.vue): Página "Nosotros". Contiene la misión/visión, organigrama interactivo y un panel circular animado con los objetivos estratégicos.
-  * [ProyeccionSocial.vue](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/pages/public/ProyeccionSocial.vue): Listado dinámico filtrado de actividades del área.
-  * [Eventos.vue](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/pages/public/Eventos.vue): Calendario oficial y cronograma clasificado (*Próximos*, *En Curso*, *Pasados*).
-  * [Documentos.vue](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/pages/public/Documentos.vue): Descarga de directivas y guías de la oficina.
-
-* **`resources/js/pages/auth/` (Autenticación)**:
-  * [Login.vue](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/pages/auth/Login.vue): Formulario de acceso interno, completamente traducido al español y personalizado estéticamente.
-
-* **`resources/js/pages/` (Administración)**:
-  * [Dashboard.vue](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/pages/Dashboard.vue): Panel administrativo. Incluye control de listas, búsquedas, filtros y formularios modales interactivos para insertar y eliminar eventos/documentos.
-
-* **`resources/js/lib/` (Mapeo de Datos Base)**:
-  * [eventsData.ts](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/lib/eventsData.ts): **IMPORTANTE**. Archivo TypeScript que exporta el listado unificado `eventsList` de **17 publicaciones reales** del Facebook de la oficina. Sirve como base para que crees tu Seeder o llenes la tabla de la base de datos.
-
----
-
-## 📌 Guía de Integración para el Desarrollador Backend
-
-Para culminar la integración dinámica con la base de datos MySQL, sigue los siguientes pasos recomendados:
-
-### 1. Migraciones y Seeders
-Crea los modelos y tablas para **Eventos** (`events`) y **Documentos** (`documents`). 
-* La estructura de datos recomendada para la tabla `events` (basada en la interfaz `EventItem` de `eventsData.ts`) es:
-  * `id` (int primary key)
-  * `title` (string)
-  * `type` (string) - *Ej. Cultural, Ambiental, Campaña Social*
-  * `category` (string) - *Ej. Proyección Social, Extensión Cultural*
-  * `status` (string/enum) - *'Proximos' | 'EnCurso' | 'Pasados'*
-  * `date` (string)
-  * `time` (string)
-  * `location` (string)
-  * `organizer` (string)
-  * `description` (text)
-  * `image` (string/text)
-  * `fbLink` (string/text)
-  * `isProyeccionSocial` (boolean)
-
-> **💡 Consejo**: Puedes usar la constante `eventsList` de [eventsData.ts](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/lib/eventsData.ts) para escribir un Seeder rápido y tener datos reales de inicio.
-
-### 2. Controladores e Inertia Shared Props
-Actualmente, las vistas públicas cargan los datos de forma estática importando `eventsList`.
-Debes reemplazar estas importaciones estáticas inyectando los datos como Props desde los controladores de Laravel utilizando Inertia:
-```php
-// En PublicController.php
-public function home() {
-    return Inertia::render('public/Home', [
-        'events' => Event::latest()->take(3)->get()
-    ]);
-}
-```
-Y en los archivos `.vue` recibir la propiedad:
-```typescript
-const props = defineProps<{
-    events: any[]
-}>();
+```bash
+npm.cmd run dev
 ```
 
-### 3. Formularios de Gestión en el Dashboard
-En [Dashboard.vue](file:///D:/Program_Files/laragon/www/Dsesign_Web/dpesec/resources/js/pages/Dashboard.vue#L60-L150) encontrarás las funciones `handleAddEventSubmit`, `handleAddDocSubmit`, `deleteEvent` y `deleteDoc`. Reemplaza la simulación local reactiva conectando los formularios de Inertia:
-```typescript
-import { useForm } from '@inertiajs/vue3';
+Abre la aplicacion en:
 
-const form = useForm({
-    title: '',
-    category: 'Proyección Social',
-    // ...
-});
-
-const handleAddEventSubmit = () => {
-    form.post(route('admin.events.store'), {
-        onSuccess: () => {
-            isAddEventOpen.value = false;
-            form.reset();
-        }
-    });
-};
+```text
+http://127.0.0.1:8000
 ```
 
----
+El panel administrativo queda disponible despues de iniciar sesion:
 
-## ⚡ Comandos Útiles de Mantenimiento
-* **Formatear y Validar Linting**: `npm run lint` (Ejecuta ESLint para asegurar coherencia de tipos y formato limpio en producción).
-* **Compilar para Producción**: `npm run build` (Minifica y empaqueta los assets con Vite en la carpeta `public/build`).
+```text
+http://127.0.0.1:8000/login
+http://127.0.0.1:8000/admin
+```
+
+## Rutas Principales
+
+Sitio publico:
+
+- `/` - Inicio
+- `/nosotros` - Nosotros
+- `/proyeccion-social` - Proyeccion Social
+- `/seguimiento-graduado` - Seguimiento al Graduado
+- `/documentos` - Documentos de gestion
+- `/eventos` - Eventos
+- `/certificados` - Busqueda publica de certificados
+- `/verificar-certificado/{identifier}` - Verificacion publica de certificados
+
+Administracion:
+
+- `/login` - Acceso
+- `/admin` - Panel administrativo
+- `/dashboard` - Dashboard protegido
+
+## Comandos Utiles
+
+Frontend:
+
+```bash
+npm run dev
+npm run build
+npm run lint:check
+npm run format:check
+npm run types:check
+```
+
+En PowerShell:
+
+```bash
+npm.cmd run build
+npm.cmd run lint:check
+```
+
+Backend:
+
+```bash
+php artisan migrate
+php artisan migrate:fresh --seed
+php artisan storage:link
+php artisan optimize:clear
+php artisan test
+composer lint:check
+composer types:check
+composer test
+```
+
+Nota: `npm run lint` y `npm run format` reescriben archivos. Para solo validar, usa `npm run lint:check` y `npm run format:check`.
+
+## Verificacion Antes de Entregar Cambios
+
+Ejecuta al menos:
+
+```bash
+npm run build
+npm run lint:check
+php artisan test
+```
+
+Si necesitas revision estatica completa:
+
+```bash
+npm run types:check
+composer types:check
+```
+
+Actualmente `npm run types:check` puede reportar errores TypeScript en `resources/js/components/CertificateTab.vue`. Si esos errores siguen presentes, revisalos antes de exigir ese comando como condicion de CI.
+
+## Estructura Importante
+
+```text
+app/                         Controladores, modelos y logica Laravel
+database/migrations/         Migraciones de base de datos
+database/seeders/            Datos iniciales
+resources/js/                Aplicacion Vue/Inertia
+resources/js/pages/public/   Paginas publicas
+resources/js/pages/auth/     Pantallas de autenticacion
+resources/js/components/     Componentes reutilizables
+resources/views/             Vistas Blade base y PDF
+routes/web.php               Rutas publicas principales
+routes/admin.php             Rutas administrativas
+public/build/                Assets compilados por Vite
+storage/app/public/          Archivos publicos subidos
+```
+
+Archivos publicos relevantes:
+
+- `resources/js/layouts/PublicLayout.vue`: layout publico, navegacion y footer.
+- `resources/js/pages/public/Home.vue`: pagina de inicio.
+- `resources/js/pages/public/AboutUs.vue`: pagina "Nosotros".
+- `resources/js/pages/public/Eventos.vue`: listado publico de eventos.
+- `resources/js/pages/public/Documentos.vue`: listado publico de documentos.
+- `resources/js/pages/public/ProyeccionSocial.vue`: pagina de subunidad.
+- `resources/js/pages/public/SeguimientoGraduado.vue`: pagina de seguimiento al graduado.
+- `resources/js/pages/public/Certificados.vue`: busqueda publica de certificados.
+
+## Flujo con Docker
+
+El repositorio incluye `Dockerfile` y `docker-compose.yml`.
+
+### 1. Preparar `.env`
+
+```bash
+copy .env.example .env
+php artisan key:generate --show
+```
+
+Copia la clave generada en `APP_KEY` dentro de `.env`.
+
+Para Docker usa valores compatibles con el servicio `db`:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=http://localhost:8090
+
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=dpesec
+DB_USERNAME=laravel
+DB_PASSWORD=laravel_secret
+DB_ROOT_PASSWORD=root_secret
+```
+
+### 2. Construir y levantar servicios
+
+```bash
+docker compose up -d --build
+```
+
+La aplicacion queda en:
+
+```text
+http://localhost:8090
+```
+
+### 3. Ejecutar migraciones dentro del contenedor
+
+```bash
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
+```
+
+Para ver logs:
+
+```bash
+docker compose logs -f app
+docker compose logs -f db
+```
+
+Para detener:
+
+```bash
+docker compose down
+```
+
+Para eliminar tambien la base de datos Docker:
+
+```bash
+docker compose down -v
+```
+
+## Solucion de Problemas
+
+### `npm.ps1 cannot be loaded`
+
+En PowerShell, Windows puede bloquear `npm.ps1`. Usa:
+
+```bash
+npm.cmd run dev
+npm.cmd run build
+```
+
+Tambien puedes usar CMD, Git Bash o ajustar la politica de ejecucion de PowerShell si tu entorno lo permite.
+
+### Error de conexion a MySQL
+
+Verifica:
+
+- que MySQL este iniciado
+- que exista la base de datos `dpesec`
+- que `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` y `DB_PASSWORD` coincidan con tu entorno
+
+Despues de cambiar `.env`, limpia cache:
+
+```bash
+php artisan optimize:clear
+```
+
+### No cargan imagenes o documentos subidos
+
+Ejecuta:
+
+```bash
+php artisan storage:link
+```
+
+Confirma que exista:
+
+```text
+public/storage -> storage/app/public
+```
+
+### Cambios Vue no aparecen
+
+Confirma que Vite este corriendo:
+
+```bash
+npm run dev
+```
+
+Si estas en produccion o no usas Vite dev server, recompila:
+
+```bash
+npm run build
+```
+
+### Reiniciar base de datos local
+
+Esto borra y recrea todas las tablas con datos iniciales:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+## Notas para Colaboradores
+
+- No subas `.env`, `vendor/`, `node_modules/`, `public/hot` ni archivos temporales.
+- Evita editar directamente `public/build`; se genera con `npm run build`.
+- Si agregas uploads publicos, deben vivir bajo `storage/app/public` y servirse con `php artisan storage:link`.
+- Antes de abrir un PR, revisa `git status` y deja fuera cambios generados que no correspondan.
