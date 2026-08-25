@@ -38,6 +38,7 @@ class AdminEventController extends Controller
             'image_files.*'       => 'file|max:5120',
             'image_path'          => 'nullable|string|max:1000',
             'fb_link'             => 'nullable|url|max:1000',
+            'registration_link'   => 'nullable|url|max:1000',
             'is_proyeccion_social' => 'boolean',
             'sort_order'          => 'integer',
         ]);
@@ -112,6 +113,7 @@ class AdminEventController extends Controller
             'image_files.*'       => 'file|max:5120',
             'image_path'          => 'nullable|string|max:1000',
             'fb_link'             => 'nullable|url|max:1000',
+            'registration_link'   => 'nullable|url|max:1000',
             'is_proyeccion_social' => 'boolean',
             'sort_order'          => 'integer',
         ]);

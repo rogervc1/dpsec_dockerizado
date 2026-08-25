@@ -35,7 +35,9 @@ const getEventImages = (event: any): string[] => {
     const images = Array.isArray(event.event_images) ? event.event_images : [];
     const cover = event.cover_image || event.image;
 
-    return [cover, ...images].filter(Boolean).filter((image, index, list) => list.indexOf(image) === index);
+    const gallery = images.length > 1 ? [cover || images[0], ...images.slice(1)] : [cover || images[0] || event.image];
+
+    return gallery.filter(Boolean).filter((image, index, list) => list.indexOf(image) === index);
 };
 
 const getOriginalEventImages = (event: any): string[] => {
@@ -56,6 +58,18 @@ const galleryTrackStyle = (event: any) => {
     };
 };
 
+const originalGalleryTrackStyle = (event: any) => {
+    const images = getOriginalEventImages(event);
+    const count = Math.max(images.length, 1);
+
+    return {
+        width: `${count * 100}%`,
+        animationDuration: `${count * 4}s`,
+        '--gallery-item-width': `${100 / count}%`,
+        '--gallery-shift': `-${((count - 1) / count) * 100}%`,
+    };
+};
+
 const events = computed(() => {
     if (props.events && props.events.length > 0) {
         return props.events.map(e => ({
@@ -65,6 +79,7 @@ const events = computed(() => {
             event_images: e.event_images ?? [],
             date: e.event_date ? new Date(e.event_date).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
             fbLink: e.fb_link,
+            registrationLink: e.registration_link,
         }));
     }
 
@@ -279,7 +294,7 @@ const filteredEvents = computed(() => {
                             <div
                                 class="flex h-full"
                                 :class="{ 'event-gallery-track': getOriginalEventImages(selectedEvent).length > 1 }"
-                                :style="galleryTrackStyle(selectedEvent)"
+                                :style="originalGalleryTrackStyle(selectedEvent)"
                             >
                                 <div
                                     v-for="image in getOriginalEventImages(selectedEvent)"
@@ -366,8 +381,8 @@ const filteredEvents = computed(() => {
                             <!-- Footer Actions -->
                             <div class="border-t border-neutral-100 dark:border-neutral-800/80 pt-4 mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <a
-                                    v-if="selectedEvent.status !== 'Pasados'"
-                                    :href="selectedEvent.fbLink"
+                                v-if="selectedEvent.status !== 'Pasados' && selectedEvent.registrationLink"
+                                    :href="selectedEvent.registrationLink"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="w-full sm:w-auto"

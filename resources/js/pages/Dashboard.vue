@@ -43,6 +43,7 @@ interface EventItem {
     image_path: string;
     event_images?: string[];
     fb_link: string;
+    registration_link?: string | null;
     is_proyeccion_social: boolean;
     sort_order: number;
 }
@@ -147,6 +148,8 @@ const eventForm = useForm({
     image_files: [] as File[],
     image_path: '',
     fb_link: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
+    has_registration: false,
+    registration_link: '',
     is_proyeccion_social: true as boolean,
     sort_order: 0,
 });
@@ -396,7 +399,10 @@ const openAddEvent = () => {
 };
 
 const submitAddEvent = () => {
-    eventForm.post('/admin/eventos', {
+    eventForm.transform((data) => ({
+        ...data,
+        registration_link: data.has_registration ? data.registration_link : null,
+    })).post('/admin/eventos', {
         preserveScroll: true,
         onSuccess: () => {
             isAddEventOpen.value = false;
@@ -422,6 +428,8 @@ const editEventForm = useForm({
     image_files: [] as File[],
     image_path: '',
     fb_link: '',
+    has_registration: false,
+    registration_link: '',
     is_proyeccion_social: false as boolean,
     sort_order: 0,
 });
@@ -446,6 +454,8 @@ const openEditEvent = (ev: EventItem) => {
     editEventForm.image_files = [];
     editEventForm.image_path = ev.image_path;
     editEventForm.fb_link = ev.fb_link;
+    editEventForm.has_registration = Boolean(ev.registration_link);
+    editEventForm.registration_link = ev.registration_link || '';
     editEventForm.is_proyeccion_social = ev.is_proyeccion_social;
     editEventForm.sort_order = ev.sort_order;
     isEditEventOpen.value = true;
@@ -454,6 +464,7 @@ const openEditEvent = (ev: EventItem) => {
 const submitEditEvent = () => {
     editEventForm.transform((data) => ({
         ...data,
+        registration_link: data.has_registration ? data.registration_link : null,
         _method: 'PUT'
     })).post(`/admin/eventos/${editingEventId.value}`, {
         preserveScroll: true,
@@ -1070,6 +1081,15 @@ const deleteDoc = (id: number) => {
                         <Input v-model="eventForm.fb_link" id="add-fb-link" type="url" placeholder="https://facebook.com/..." class="rounded-xl text-xs h-10" />
                     </div>
 
+                    <div class="space-y-2 rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+                        <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                            <input v-model="eventForm.has_registration" type="checkbox" class="size-4 rounded border-neutral-300 cursor-pointer" />
+                            Mostrar botón de registro
+                        </label>
+                        <Input v-if="eventForm.has_registration" v-model="eventForm.registration_link" type="url" placeholder="https://forms.google.com/..." class="rounded-xl text-xs h-10" />
+                        <p v-if="eventForm.errors.registration_link" class="text-red-500 text-[10px]">{{ eventForm.errors.registration_link }}</p>
+                    </div>
+
                     <div class="flex items-center space-x-3 py-2">
                         <input type="checkbox" v-model="eventForm.is_proyeccion_social" id="add-is-proyeccion-social" class="size-4 rounded border-neutral-300 cursor-pointer" />
                         <Label for="add-is-proyeccion-social" class="text-xs font-bold cursor-pointer select-none">¿Pertenece al área de Proyección Social?</Label>
@@ -1240,6 +1260,14 @@ const deleteDoc = (id: number) => {
                     <div class="space-y-1">
                         <Label for="edit-fb-link" class="text-xs">Enlace de Facebook</Label>
                         <Input v-model="editEventForm.fb_link" id="edit-fb-link" type="url" class="rounded-xl text-xs h-10" />
+                    </div>
+                    <div class="space-y-2 rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+                        <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
+                            <input v-model="editEventForm.has_registration" type="checkbox" class="size-4 rounded border-neutral-300 cursor-pointer" />
+                            Mostrar botón de registro
+                        </label>
+                        <Input v-if="editEventForm.has_registration" v-model="editEventForm.registration_link" type="url" placeholder="https://forms.google.com/..." class="rounded-xl text-xs h-10" />
+                        <p v-if="editEventForm.errors.registration_link" class="text-red-500 text-[10px]">{{ editEventForm.errors.registration_link }}</p>
                     </div>
                     <div class="flex items-center space-x-3 py-2">
                         <input type="checkbox" v-model="editEventForm.is_proyeccion_social" id="edit-is-proyeccion-social" class="size-4 rounded border-neutral-300 cursor-pointer" />

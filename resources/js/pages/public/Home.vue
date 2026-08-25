@@ -63,7 +63,9 @@ const getEventImages = (event: any): string[] => {
     const images = Array.isArray(event.event_images) ? event.event_images : [];
     const cover = event.cover_image || event.image;
 
-    return [cover, ...images].filter(Boolean).filter((image, index, list) => list.indexOf(image) === index);
+    const gallery = images.length > 1 ? [cover || images[0], ...images.slice(1)] : [cover || images[0] || event.image];
+
+    return gallery.filter(Boolean).filter((image, index, list) => list.indexOf(image) === index);
 };
 
 const getOriginalEventImages = (event: any): string[] => {
@@ -74,6 +76,18 @@ const getOriginalEventImages = (event: any): string[] => {
 
 const galleryTrackStyle = (event: any) => {
     const images = getEventImages(event);
+    const count = Math.max(images.length, 1);
+
+    return {
+        width: `${count * 100}%`,
+        animationDuration: `${count * 4}s`,
+        '--gallery-item-width': `${100 / count}%`,
+        '--gallery-shift': `-${((count - 1) / count) * 100}%`,
+    };
+};
+
+const originalGalleryTrackStyle = (event: any) => {
+    const images = getOriginalEventImages(event);
     const count = Math.max(images.length, 1);
 
     return {
@@ -112,6 +126,7 @@ const latestActivities = computed(() => (props.events ?? []).slice(0, 3).map(e =
     event_images: e.event_images ?? [],
     date: e.event_date ? new Date(e.event_date).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
     fbLink: e.fb_link,
+    registrationLink: e.registration_link,
 })));
 
 // Real DB documents with fallback
@@ -734,7 +749,7 @@ clearInterval(statsInterval);
                             <div
                                 class="flex h-full"
                                 :class="{ 'event-gallery-track': getOriginalEventImages(selectedActivity).length > 1 }"
-                                :style="galleryTrackStyle(selectedActivity)"
+                                :style="originalGalleryTrackStyle(selectedActivity)"
                             >
                                 <div
                                     v-for="image in getOriginalEventImages(selectedActivity)"
@@ -811,7 +826,7 @@ clearInterval(statsInterval);
                             <!-- Footer Actions -->
                             <div
                                 class="border-t border-neutral-100 dark:border-neutral-800/80 pt-4 mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <a href="https://www.facebook.com/ProyeccionSocialUNAPuno" target="_blank"
+                                <a v-if="selectedActivity.registrationLink" :href="selectedActivity.registrationLink" target="_blank"
                                     rel="noopener noreferrer" class="w-full sm:w-auto" @click.stop>
                                     <Button size="sm"
                                         class="w-full sm:w-auto rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
