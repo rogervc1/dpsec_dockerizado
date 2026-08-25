@@ -41,6 +41,7 @@ interface EventItem {
     organizer: string;
     description: string;
     image_path: string;
+    cover_image_path?: string | null;
     event_images?: string[];
     fb_link: string;
     registration_link?: string | null;
@@ -194,6 +195,18 @@ const loadCropPreview = (file: File) => {
         debouncedCrop();
     };
     reader.readAsDataURL(file);
+};
+
+const loadCropPreviewFromUrl = async (url: string) => {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const extension = blob.type.split('/')[1] || 'jpg';
+        loadCropPreview(new File([blob], `event_current_image.${extension}`, { type: blob.type }));
+    } catch {
+        cropSource.value = url;
+        previewImageSize.value = { width: 0, height: 0 };
+    }
 };
 
 const onEventImagesSelected = (e: Event, mode: 'add' | 'edit') => {
@@ -435,6 +448,7 @@ const editEventForm = useForm({
 });
 
 const openEditEvent = (ev: EventItem) => {
+    activeMode.value = 'edit';
     cropSource.value = '';
     zoom.value = 1;
     positionX.value = 0;
@@ -459,6 +473,12 @@ const openEditEvent = (ev: EventItem) => {
     editEventForm.is_proyeccion_social = ev.is_proyeccion_social;
     editEventForm.sort_order = ev.sort_order;
     isEditEventOpen.value = true;
+
+    const currentImage = ev.cover_image_path || ev.image_path;
+
+    if (currentImage) {
+        loadCropPreviewFromUrl(currentImage);
+    }
 };
 
 const submitEditEvent = () => {
