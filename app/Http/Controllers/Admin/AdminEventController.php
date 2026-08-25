@@ -33,6 +33,7 @@ class AdminEventController extends Controller
             'organizer'           => 'required|string|max:255',
             'description'         => 'required|string',
             'image_file'          => 'nullable|file|max:5120',
+            'cover_image_file'    => 'nullable|file|max:5120',
             'image_files'         => 'nullable|array|max:10',
             'image_files.*'       => 'file|max:5120',
             'image_path'          => 'nullable|string|max:1000',
@@ -43,7 +44,7 @@ class AdminEventController extends Controller
 
         $gallery = [];
 
-        if ($request->hasFile('image_file')) {
+        if ($request->hasFile('image_file') && !$request->hasFile('image_files')) {
             $file = $request->file('image_file');
             
             // Validate extension manually
@@ -74,10 +75,20 @@ class AdminEventController extends Controller
 
         if (count($gallery) > 0) {
             $validated['event_images'] = array_values(array_unique($gallery));
-            $validated['image_path'] ??= $validated['event_images'][0];
+            $validated['image_path'] = $validated['event_images'][0];
         }
 
-        unset($validated['image_file'], $validated['image_files']);
+        if ($request->hasFile('cover_image_file')) {
+            $coverPath = $request->file('cover_image_file')->store('events', 'public');
+            if ($coverPath === false) {
+                return redirect()->back()->with('error', 'Error al guardar la portada del evento.');
+            }
+            $validated['cover_image_path'] = Storage::url($coverPath);
+        } else {
+            $validated['cover_image_path'] = $validated['image_path'] ?? null;
+        }
+
+        unset($validated['image_file'], $validated['image_files'], $validated['cover_image_file']);
 
         Event::create($validated);
 
@@ -96,6 +107,7 @@ class AdminEventController extends Controller
             'organizer'           => 'required|string|max:255',
             'description'         => 'required|string',
             'image_file'          => 'nullable|file|max:5120',
+            'cover_image_file'    => 'nullable|file|max:5120',
             'image_files'         => 'nullable|array|max:10',
             'image_files.*'       => 'file|max:5120',
             'image_path'          => 'nullable|string|max:1000',
@@ -104,7 +116,7 @@ class AdminEventController extends Controller
             'sort_order'          => 'integer',
         ]);
 
-        if ($request->hasFile('image_file')) {
+        if ($request->hasFile('image_file') && !$request->hasFile('image_files') && !$request->hasFile('cover_image_file')) {
             // Delete old file
             if ($event->image_path && !str_starts_with($event->image_path, 'http')) {
                 $oldPath = str_replace('/storage/', '', $event->image_path);
@@ -123,6 +135,7 @@ class AdminEventController extends Controller
                 return redirect()->back()->with('error', 'Error al guardar la nueva imagen del evento.');
             }
             $validated['image_path'] = Storage::url($path);
+            $validated['event_images'] = [$validated['image_path']];
         }
 
         if ($request->hasFile('image_files')) {
@@ -144,14 +157,20 @@ class AdminEventController extends Controller
 
             $validated['event_images'] = $gallery;
             $validated['image_path'] = $gallery[0] ?? $validated['image_path'] ?? $event->image_path;
-        } elseif (isset($validated['image_path'])) {
-            $validated['event_images'] = array_values(array_unique(array_filter([
-                $validated['image_path'],
-                ...($event->event_images ?? []),
-            ])));
         }
 
-        unset($validated['image_file'], $validated['image_files']);
+        if ($request->hasFile('cover_image_file')) {
+            $this->deleteLocalEventCover($event);
+            $coverPath = $request->file('cover_image_file')->store('events', 'public');
+            if ($coverPath === false) {
+                return redirect()->back()->with('error', 'Error al guardar la portada del evento.');
+            }
+            $validated['cover_image_path'] = Storage::url($coverPath);
+        } elseif ($request->hasFile('image_files')) {
+            $validated['cover_image_path'] = $validated['image_path'] ?? $event->cover_image_path;
+        }
+
+        unset($validated['image_file'], $validated['image_files'], $validated['cover_image_file']);
 
         $event->update($validated);
 
@@ -177,6 +196,15 @@ class AdminEventController extends Controller
             if (!str_starts_with($path, 'http')) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $path));
             }
+        }
+
+        $this->deleteLocalEventCover($event);
+    }
+
+    private function deleteLocalEventCover(Event $event): void
+    {
+        if ($event->cover_image_path && !str_starts_with($event->cover_image_path, 'http')) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $event->cover_image_path));
         }
     }
 }

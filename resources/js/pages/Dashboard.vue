@@ -143,6 +143,7 @@ const eventForm = useForm({
     organizer: 'Dirección de Proyección Social y Extensión Cultural',
     description: '',
     image_file: null as File | null,
+    cover_image_file: null as File | null,
     image_files: [] as File[],
     image_path: '',
     fb_link: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
@@ -201,9 +202,11 @@ const onEventImagesSelected = (e: Event, mode: 'add' | 'edit') => {
     if (mode === 'edit') {
         editEventForm.image_files = files;
         editEventForm.image_file = null;
+        editEventForm.cover_image_file = null;
     } else {
         eventForm.image_files = files;
         eventForm.image_file = null;
+        eventForm.cover_image_file = null;
     }
 
     cropSource.value = '';
@@ -246,6 +249,25 @@ const clampCropPosition = () => {
 const onZoomChanged = () => {
     clampCropPosition();
     debouncedCrop();
+};
+
+const cropPreviewStyle = () => {
+    const container = dragContainerRef.value;
+    const containerWidth = container?.clientWidth ?? 400;
+    const containerHeight = container?.clientHeight ?? 225;
+    const imageRatio = previewImageSize.value.width && previewImageSize.value.height
+        ? previewImageSize.value.width / previewImageSize.value.height
+        : containerWidth / containerHeight;
+
+    return {
+        left: '50%',
+        top: '50%',
+        transform: `translate(-50%, -50%) translate(${positionX.value}px, ${positionY.value}px) scale(${zoom.value})`,
+        width: imageRatio > containerWidth / containerHeight ? 'auto' : '100%',
+        height: imageRatio > containerWidth / containerHeight ? '100%' : 'auto',
+        maxWidth: 'none',
+        maxHeight: 'none',
+    };
 };
 
 const startDrag = (e: MouseEvent | TouchEvent) => {
@@ -343,9 +365,9 @@ return;
                 const croppedFile = new File([blob], 'event_image.webp', { type: 'image/webp' });
 
                 if (activeMode.value === 'edit') {
-                    editEventForm.image_files = editEventForm.image_files.map((file, index) => index === previewImageIndex.value ? croppedFile : file);
+                    editEventForm.cover_image_file = croppedFile;
                 } else {
-                    eventForm.image_files = eventForm.image_files.map((file, index) => index === previewImageIndex.value ? croppedFile : file);
+                    eventForm.cover_image_file = croppedFile;
                 }
             }
         }, 'image/webp', 0.85);
@@ -396,6 +418,7 @@ const editEventForm = useForm({
     organizer: '',
     description: '',
     image_file: null as File | null,
+    cover_image_file: null as File | null,
     image_files: [] as File[],
     image_path: '',
     fb_link: '',
@@ -419,6 +442,7 @@ const openEditEvent = (ev: EventItem) => {
     editEventForm.organizer = ev.organizer;
     editEventForm.description = ev.description;
     editEventForm.image_file = null;
+    editEventForm.cover_image_file = null;
     editEventForm.image_files = [];
     editEventForm.image_path = ev.image_path;
     editEventForm.fb_link = ev.fb_link;
@@ -1014,17 +1038,7 @@ const deleteDoc = (id: number) => {
                                     :src="cropSource" 
                                     alt="Preview" 
                                     class="absolute pointer-events-none origin-center"
-                                    :style="{
-                                        left: '50%',
-                                        top: '50%',
-                                        transform: `translate(-50%, -50%) translate(${positionX}px, ${positionY}px) scale(${zoom})`,
-                                        width: 'auto',
-                                        height: 'auto',
-                                        minWidth: '100%',
-                                        minHeight: '100%',
-                                        maxWidth: 'none',
-                                        maxHeight: 'none'
-                                    }"
+                                    :style="cropPreviewStyle()"
                                 />
                                 <!-- Cropper Helper Grid lines -->
                                 <div class="absolute inset-0 border border-indigo-500/30 pointer-events-none flex items-center justify-center">
@@ -1197,17 +1211,7 @@ const deleteDoc = (id: number) => {
                                     :src="cropSource" 
                                     alt="Preview" 
                                     class="absolute pointer-events-none origin-center"
-                                    :style="{
-                                        left: '50%',
-                                        top: '50%',
-                                        transform: `translate(-50%, -50%) translate(${positionX}px, ${positionY}px) scale(${zoom})`,
-                                        width: 'auto',
-                                        height: 'auto',
-                                        minWidth: '100%',
-                                        minHeight: '100%',
-                                        maxWidth: 'none',
-                                        maxHeight: 'none'
-                                    }"
+                                    :style="cropPreviewStyle()"
                                 />
                                 <!-- Cropper Helper Grid lines -->
                                 <div class="absolute inset-0 border border-indigo-500/30 pointer-events-none flex items-center justify-center">

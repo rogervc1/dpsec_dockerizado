@@ -38,8 +38,15 @@ const closeActivityModal = () => {
 
 const getEventImages = (event: any): string[] => {
     const images = Array.isArray(event.event_images) ? event.event_images : [];
+    const cover = event.cover_image || event.image;
 
-    return [...images, event.image].filter(Boolean).filter((image, index, list) => list.indexOf(image) === index);
+    return [cover, ...images].filter(Boolean).filter((image, index, list) => list.indexOf(image) === index);
+};
+
+const getOriginalEventImages = (event: any): string[] => {
+    const images = Array.isArray(event.event_images) ? event.event_images : [];
+
+    return (images.length ? images : [event.image]).filter(Boolean);
 };
 
 const galleryTrackStyle = (event: any) => {
@@ -68,6 +75,7 @@ const activities = computed(() => {
         return props.events.map(e => ({
             ...e,
             image: e.image_path,
+            cover_image: e.cover_image_path || e.image_path,
             event_images: e.event_images ?? [],
             date: e.event_date ? new Date(e.event_date).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
             fbLink: e.fb_link,
@@ -333,11 +341,11 @@ const faqs = computed(() => {
                         <div class="md:col-span-5 relative h-[180px] sm:h-[220px] md:h-full overflow-hidden bg-neutral-100 dark:bg-neutral-950 shrink-0">
                             <div
                                 class="flex h-full"
-                                :class="{ 'event-gallery-track': getEventImages(selectedActivity).length > 1 }"
+                                :class="{ 'event-gallery-track': getOriginalEventImages(selectedActivity).length > 1 }"
                                 :style="galleryTrackStyle(selectedActivity)"
                             >
                                 <div
-                                    v-for="image in getEventImages(selectedActivity)"
+                                    v-for="image in getOriginalEventImages(selectedActivity)"
                                     :key="image"
                                     class="h-full w-full shrink-0 flex items-center justify-center"
                                 >
