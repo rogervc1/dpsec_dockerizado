@@ -159,6 +159,16 @@ const dragContainerRef = ref<HTMLElement | null>(null);
 const isDragging = ref(false);
 const dragStart = ref({ x: 0, y: 0 });
 const activeMode = ref<'add' | 'edit'>('add');
+const previewImageIndex = ref(0);
+const filePreviewUrls = new WeakMap<File, string>();
+
+const getFilePreview = (file: File) => {
+    if (!filePreviewUrls.has(file)) {
+        filePreviewUrls.set(file, URL.createObjectURL(file));
+    }
+
+    return filePreviewUrls.get(file) as string;
+};
 
 const loadCropPreview = (file: File) => {
     const reader = new FileReader();
@@ -176,6 +186,7 @@ const onEventImagesSelected = (e: Event, mode: 'add' | 'edit') => {
     activeMode.value = mode;
     const target = e.target as HTMLInputElement;
     const files = Array.from(target.files ?? []);
+    previewImageIndex.value = 0;
 
     if (mode === 'edit') {
         editEventForm.image_files = files;
@@ -190,6 +201,33 @@ const onEventImagesSelected = (e: Event, mode: 'add' | 'edit') => {
     if (files[0]) {
         loadCropPreview(files[0]);
     }
+};
+
+const selectPreviewImage = (index: number, mode: 'add' | 'edit') => {
+    const files = mode === 'edit' ? editEventForm.image_files : eventForm.image_files;
+    const file = files[index];
+
+    if (!file) {
+        return;
+    }
+
+    activeMode.value = mode;
+    previewImageIndex.value = index;
+    loadCropPreview(file);
+};
+
+const clampCropPosition = () => {
+    const container = dragContainerRef.value;
+    const maxX = (container?.clientWidth ?? 400) * Math.max(zoom.value - 1, 0) / 2;
+    const maxY = (container?.clientHeight ?? 225) * Math.max(zoom.value - 1, 0) / 2;
+
+    positionX.value = Math.min(Math.max(positionX.value, -maxX), maxX);
+    positionY.value = Math.min(Math.max(positionY.value, -maxY), maxY);
+};
+
+const onZoomChanged = () => {
+    clampCropPosition();
+    debouncedCrop();
 };
 
 const startDrag = (e: MouseEvent | TouchEvent) => {
@@ -215,6 +253,7 @@ return;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     positionX.value = clientX - dragStart.value.x;
     positionY.value = clientY - dragStart.value.y;
+    clampCropPosition();
     debouncedCrop();
 };
 
@@ -286,9 +325,9 @@ return;
                 const croppedFile = new File([blob], 'event_image.webp', { type: 'image/webp' });
 
                 if (activeMode.value === 'edit') {
-                    editEventForm.image_files = [croppedFile, ...editEventForm.image_files.slice(1)];
+                    editEventForm.image_files = editEventForm.image_files.map((file, index) => index === previewImageIndex.value ? croppedFile : file);
                 } else {
-                    eventForm.image_files = [croppedFile, ...eventForm.image_files.slice(1)];
+                    eventForm.image_files = eventForm.image_files.map((file, index) => index === previewImageIndex.value ? croppedFile : file);
                 }
             }
         }, 'image/webp', 0.85);
@@ -311,6 +350,7 @@ const openAddEvent = () => {
     zoom.value = 1;
     positionX.value = 0;
     positionY.value = 0;
+    previewImageIndex.value = 0;
     eventForm.reset();
     isAddEventOpen.value = true;
 };
@@ -350,6 +390,7 @@ const openEditEvent = (ev: EventItem) => {
     zoom.value = 1;
     positionX.value = 0;
     positionY.value = 0;
+    previewImageIndex.value = 0;
     editingEventId.value = ev.id;
     editEventForm.title = ev.title;
     editEventForm.type = ev.type;
@@ -919,6 +960,19 @@ const deleteDoc = (id: number) => {
                                 {{ eventForm.image_files.length }} imagen(es) seleccionada(s)
                             </span>
                         </div>
+                        <div v-if="eventForm.image_files.length" class="flex gap-2 overflow-x-auto py-1">
+                            <button
+                                v-for="(file, index) in eventForm.image_files"
+                                :key="`${file.name}-${index}`"
+                                type="button"
+                                class="size-14 shrink-0 overflow-hidden rounded-lg border-2 bg-neutral-100 dark:bg-neutral-950 cursor-pointer"
+                                :class="index === previewImageIndex && activeMode === 'add' ? 'border-indigo-500' : 'border-transparent'"
+                                :title="`Editar imagen ${index + 1}`"
+                                @click="selectPreviewImage(index, 'add')"
+                            >
+                                <img :src="getFilePreview(file)" alt="" class="w-full h-full object-cover" />
+                            </button>
+                        </div>
                         <p v-if="eventForm.errors.image_file" class="text-red-500 text-[10px]">{{ eventForm.errors.image_file }}</p>
                         <p v-if="eventForm.errors.image_files" class="text-red-500 text-[10px]">{{ eventForm.errors.image_files }}</p>
 
@@ -968,7 +1022,7 @@ const deleteDoc = (id: number) => {
                                     max="3" 
                                     step="0.05" 
                                     v-model.number="zoom" 
-                                    @input="debouncedCrop"
+                                    @input="onZoomChanged"
                                     class="flex-grow h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                 />
                                 <span class="text-[10px] font-mono text-neutral-500">{{ zoom.toFixed(1) }}x</span>
@@ -1086,6 +1140,19 @@ const deleteDoc = (id: number) => {
                                 {{ editEventForm.image_files.length }} imagen(es) seleccionada(s)
                             </span>
                         </div>
+                        <div v-if="editEventForm.image_files.length" class="flex gap-2 overflow-x-auto py-1">
+                            <button
+                                v-for="(file, index) in editEventForm.image_files"
+                                :key="`${file.name}-${index}`"
+                                type="button"
+                                class="size-14 shrink-0 overflow-hidden rounded-lg border-2 bg-neutral-100 dark:bg-neutral-950 cursor-pointer"
+                                :class="index === previewImageIndex && activeMode === 'edit' ? 'border-indigo-500' : 'border-transparent'"
+                                :title="`Editar imagen ${index + 1}`"
+                                @click="selectPreviewImage(index, 'edit')"
+                            >
+                                <img :src="getFilePreview(file)" alt="" class="w-full h-full object-cover" />
+                            </button>
+                        </div>
                         <p v-if="editEventForm.errors.image_file" class="text-red-500 text-[10px]">{{ editEventForm.errors.image_file }}</p>
                         <p v-if="editEventForm.errors.image_files" class="text-red-500 text-[10px]">{{ editEventForm.errors.image_files }}</p>
 
@@ -1135,7 +1202,7 @@ const deleteDoc = (id: number) => {
                                     max="3" 
                                     step="0.05" 
                                     v-model.number="zoom" 
-                                    @input="debouncedCrop"
+                                    @input="onZoomChanged"
                                     class="flex-grow h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                 />
                                 <span class="text-[10px] font-mono text-neutral-500">{{ zoom.toFixed(1) }}x</span>

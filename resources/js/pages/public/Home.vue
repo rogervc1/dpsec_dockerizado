@@ -434,7 +434,7 @@ clearInterval(statsInterval);
 
                                 <!-- Description -->
                                 <p
-                                    class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed text-justify font-normal">
+                                    class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed text-justify whitespace-pre-line font-normal">
                                     {{ activity.description }}
                                 </p>
                             </div>
@@ -794,7 +794,7 @@ clearInterval(statsInterval);
                                     <h4 class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Detalles
                                     </h4>
                                     <p
-                                        class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed text-justify">
+                                        class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed text-justify whitespace-pre-line">
                                         {{ selectedActivity.description }}
                                     </p>
                                 </div>

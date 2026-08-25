@@ -280,7 +280,7 @@ const faqs = computed(() => {
                                 </h3>
                                 
                                 <!-- Description -->
-                                <p class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed text-justify font-normal">
+                                <p class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed text-justify whitespace-pre-line font-normal">
                                     {{ act.description }}
                                 </p>
                             </div>
@@ -408,7 +408,7 @@ const faqs = computed(() => {
                                 <!-- Description -->
                                 <div class="space-y-1.5">
                                     <h4 class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Detalles del Proyecto</h4>
-                                    <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed text-justify">
+                                    <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed text-justify whitespace-pre-line">
                                         {{ selectedActivity.description }}
                                     </p>
                                 </div>
