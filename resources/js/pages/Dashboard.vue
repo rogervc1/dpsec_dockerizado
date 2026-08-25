@@ -160,6 +160,7 @@ const isDragging = ref(false);
 const dragStart = ref({ x: 0, y: 0 });
 const activeMode = ref<'add' | 'edit'>('add');
 const previewImageIndex = ref(0);
+const previewImageSize = ref({ width: 0, height: 0 });
 const filePreviewUrls = new WeakMap<File, string>();
 
 const getFilePreview = (file: File) => {
@@ -174,6 +175,15 @@ const loadCropPreview = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
         cropSource.value = event.target?.result as string;
+        const preview = new Image();
+        preview.onload = () => {
+            previewImageSize.value = {
+                width: preview.naturalWidth,
+                height: preview.naturalHeight,
+            };
+            clampCropPosition();
+        };
+        preview.src = cropSource.value;
         zoom.value = 1;
         positionX.value = 0;
         positionY.value = 0;
@@ -218,8 +228,16 @@ const selectPreviewImage = (index: number, mode: 'add' | 'edit') => {
 
 const clampCropPosition = () => {
     const container = dragContainerRef.value;
-    const maxX = (container?.clientWidth ?? 400) * Math.max(zoom.value - 1, 0) / 2;
-    const maxY = (container?.clientHeight ?? 225) * Math.max(zoom.value - 1, 0) / 2;
+    const containerWidth = container?.clientWidth ?? 400;
+    const containerHeight = container?.clientHeight ?? 225;
+    const imageRatio = previewImageSize.value.width && previewImageSize.value.height
+        ? previewImageSize.value.width / previewImageSize.value.height
+        : containerWidth / containerHeight;
+    const containerRatio = containerWidth / containerHeight;
+    const baseWidth = imageRatio > containerRatio ? containerHeight * imageRatio : containerWidth;
+    const baseHeight = imageRatio > containerRatio ? containerHeight : containerWidth / imageRatio;
+    const maxX = Math.max((baseWidth * zoom.value - containerWidth) / 2, 0);
+    const maxY = Math.max((baseHeight * zoom.value - containerHeight) / 2, 0);
 
     positionX.value = Math.min(Math.max(positionX.value, -maxX), maxX);
     positionY.value = Math.min(Math.max(positionY.value, -maxY), maxY);
@@ -1000,9 +1018,12 @@ const deleteDoc = (id: number) => {
                                         left: '50%',
                                         top: '50%',
                                         transform: `translate(-50%, -50%) translate(${positionX}px, ${positionY}px) scale(${zoom})`,
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover'
+                                        width: 'auto',
+                                        height: 'auto',
+                                        minWidth: '100%',
+                                        minHeight: '100%',
+                                        maxWidth: 'none',
+                                        maxHeight: 'none'
                                     }"
                                 />
                                 <!-- Cropper Helper Grid lines -->
@@ -1180,9 +1201,12 @@ const deleteDoc = (id: number) => {
                                         left: '50%',
                                         top: '50%',
                                         transform: `translate(-50%, -50%) translate(${positionX}px, ${positionY}px) scale(${zoom})`,
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover'
+                                        width: 'auto',
+                                        height: 'auto',
+                                        minWidth: '100%',
+                                        minHeight: '100%',
+                                        maxWidth: 'none',
+                                        maxHeight: 'none'
                                     }"
                                 />
                                 <!-- Cropper Helper Grid lines -->
