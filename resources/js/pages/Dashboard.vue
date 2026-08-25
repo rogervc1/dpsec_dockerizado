@@ -41,6 +41,7 @@ interface EventItem {
     organizer: string;
     description: string;
     image_path: string;
+    event_images?: string[];
     fb_link: string;
     is_proyeccion_social: boolean;
     sort_order: number;
@@ -142,6 +143,7 @@ const eventForm = useForm({
     organizer: 'Dirección de Proyección Social y Extensión Cultural',
     description: '',
     image_file: null as File | null,
+    image_files: [] as File[],
     image_path: '',
     fb_link: 'https://www.facebook.com/ProyeccionSocialUNAPuno',
     is_proyeccion_social: true as boolean,
@@ -158,22 +160,20 @@ const isDragging = ref(false);
 const dragStart = ref({ x: 0, y: 0 });
 const activeMode = ref<'add' | 'edit'>('add');
 
-const onFileSelected = (e: Event, mode: 'add' | 'edit') => {
+const onEventImagesSelected = (e: Event, mode: 'add' | 'edit') => {
     activeMode.value = mode;
     const target = e.target as HTMLInputElement;
+    const files = Array.from(target.files ?? []);
 
-    if (target.files && target.files[0]) {
-        const file = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            cropSource.value = event.target?.result as string;
-            zoom.value = 1;
-            positionX.value = 0;
-            positionY.value = 0;
-            debouncedCrop();
-        };
-        reader.readAsDataURL(file);
+    if (mode === 'edit') {
+        editEventForm.image_files = files;
+        editEventForm.image_file = null;
+    } else {
+        eventForm.image_files = files;
+        eventForm.image_file = null;
     }
+
+    cropSource.value = '';
 };
 
 const startDrag = (e: MouseEvent | TouchEvent) => {
@@ -322,6 +322,7 @@ const editEventForm = useForm({
     organizer: '',
     description: '',
     image_file: null as File | null,
+    image_files: [] as File[],
     image_path: '',
     fb_link: '',
     is_proyeccion_social: false as boolean,
@@ -343,6 +344,7 @@ const openEditEvent = (ev: EventItem) => {
     editEventForm.organizer = ev.organizer;
     editEventForm.description = ev.description;
     editEventForm.image_file = null;
+    editEventForm.image_files = [];
     editEventForm.image_path = ev.image_path;
     editEventForm.fb_link = ev.fb_link;
     editEventForm.is_proyeccion_social = ev.is_proyeccion_social;
@@ -641,7 +643,7 @@ const deleteDoc = (id: number) => {
                             >
                                 <td class="p-4">
                                     <div class="flex items-center gap-3">
-                                        <img v-if="item.image_path" :src="item.image_path" class="size-10 rounded-lg object-cover bg-neutral-100 shrink-0 border border-neutral-200/20" />
+                                        <img v-if="item.image_path" :src="item.image_path" class="size-10 rounded-lg object-contain bg-neutral-100 shrink-0 border border-neutral-200/20" />
                                         <div v-else class="size-10 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
                                             <Calendar class="size-5 text-indigo-500" />
                                         </div>
@@ -885,7 +887,8 @@ const deleteDoc = (id: number) => {
                             <input 
                                 type="file" 
                                 accept="image/*" 
-                                @change="e => onFileSelected(e, 'add')" 
+                                multiple
+                                @change="e => onEventImagesSelected(e, 'add')"
                                 id="add-image-file" 
                                 class="hidden" 
                             />
@@ -894,13 +897,14 @@ const deleteDoc = (id: number) => {
                                 class="flex items-center justify-center gap-2 px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors cursor-pointer select-none"
                             >
                                 <Upload class="size-4" />
-                                Seleccionar Imagen
+                                Seleccionar imágenes
                             </label>
-                            <span class="text-[10px] text-neutral-400 truncate max-w-[200px]" v-if="eventForm.image_file">
-                                {{ eventForm.image_file.name }} (WebP)
+                            <span class="text-[10px] text-neutral-400 truncate max-w-[200px]" v-if="eventForm.image_files.length">
+                                {{ eventForm.image_files.length }} imagen(es) seleccionada(s)
                             </span>
                         </div>
                         <p v-if="eventForm.errors.image_file" class="text-red-500 text-[10px]">{{ eventForm.errors.image_file }}</p>
+                        <p v-if="eventForm.errors.image_files" class="text-red-500 text-[10px]">{{ eventForm.errors.image_files }}</p>
 
                         <!-- Live Interactive Card Preview -->
                         <div v-if="cropSource" class="mt-4 space-y-2">
@@ -1041,7 +1045,7 @@ const deleteDoc = (id: number) => {
                         
                         <!-- Current image preview if exists -->
                         <div v-if="editEventForm.image_path && !cropSource" class="mb-2 relative w-full h-32 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-                            <img :src="editEventForm.image_path" class="w-full h-full object-cover" />
+                            <img :src="editEventForm.image_path" class="w-full h-full object-contain" />
                             <div class="absolute inset-0 bg-black/45 flex items-center justify-center text-xs font-bold text-white">Imagen Actual</div>
                         </div>
 
@@ -1050,7 +1054,8 @@ const deleteDoc = (id: number) => {
                             <input 
                                 type="file" 
                                 accept="image/*" 
-                                @change="e => onFileSelected(e, 'edit')" 
+                                multiple
+                                @change="e => onEventImagesSelected(e, 'edit')"
                                 id="edit-image-file" 
                                 class="hidden" 
                             />
@@ -1059,13 +1064,14 @@ const deleteDoc = (id: number) => {
                                 class="flex items-center justify-center gap-2 px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors cursor-pointer select-none"
                             >
                                 <Upload class="size-4" />
-                                Cambiar Imagen
+                                Reemplazar imágenes
                             </label>
-                            <span class="text-[10px] text-neutral-400 truncate max-w-[200px]" v-if="editEventForm.image_file">
-                                {{ editEventForm.image_file.name }} (WebP)
+                            <span class="text-[10px] text-neutral-400 truncate max-w-[200px]" v-if="editEventForm.image_files.length">
+                                {{ editEventForm.image_files.length }} imagen(es) seleccionada(s)
                             </span>
                         </div>
                         <p v-if="editEventForm.errors.image_file" class="text-red-500 text-[10px]">{{ editEventForm.errors.image_file }}</p>
+                        <p v-if="editEventForm.errors.image_files" class="text-red-500 text-[10px]">{{ editEventForm.errors.image_files }}</p>
 
                         <!-- Live Interactive Card Preview -->
                         <div v-if="cropSource" class="mt-4 space-y-2">

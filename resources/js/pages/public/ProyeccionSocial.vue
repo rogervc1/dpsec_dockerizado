@@ -36,6 +36,24 @@ const closeActivityModal = () => {
     isModalOpen.value = false;
 };
 
+const getEventImages = (event: any): string[] => {
+    const images = Array.isArray(event.event_images) ? event.event_images : [];
+
+    return [...images, event.image].filter(Boolean).filter((image, index, list) => list.indexOf(image) === index);
+};
+
+const galleryTrackStyle = (event: any) => {
+    const images = getEventImages(event);
+    const count = Math.max(images.length, 1);
+
+    return {
+        width: `${count * 100}%`,
+        animationDuration: `${count * 4}s`,
+        '--gallery-item-width': `${100 / count}%`,
+        '--gallery-shift': `-${((count - 1) / count) * 100}%`,
+    };
+};
+
 // Mock Categories
 const categories = ['Todos', 'Proyección Social', 'Extensión Cultural', 'Voluntariado Universitario'];
 
@@ -50,6 +68,7 @@ const activities = computed(() => {
         return props.events.map(e => ({
             ...e,
             image: e.image_path,
+            event_images: e.event_images ?? [],
             date: e.event_date ? new Date(e.event_date).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
             fbLink: e.fb_link,
             isProyeccionSocial: e.is_proyeccion_social
@@ -215,11 +234,19 @@ const faqs = computed(() => {
                     >
                         <!-- Image Section -->
                         <div class="h-52 relative overflow-hidden bg-neutral-150 dark:bg-neutral-950 shrink-0">
-                            <img 
-                                :src="act.image" 
-                                :alt="act.title" 
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                            />
+                            <div
+                                class="flex h-full"
+                                :class="{ 'event-gallery-track': getEventImages(act).length > 1 }"
+                                :style="galleryTrackStyle(act)"
+                            >
+                                <div
+                                    v-for="image in getEventImages(act)"
+                                    :key="image"
+                                    class="h-full min-w-0 flex-1 bg-neutral-100 dark:bg-neutral-950"
+                                >
+                                    <img :src="image" :alt="act.title" class="w-full h-full object-contain" />
+                                </div>
+                            </div>
                             <!-- Top Badges -->
                             <div class="absolute top-4 left-4 z-20 flex gap-2 flex-wrap">
                                 <span class="text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1.5 rounded-lg bg-white/95 dark:bg-neutral-950/95 text-indigo-600 dark:text-indigo-400 shadow-xs border border-neutral-200/30 dark:border-neutral-800/30">
@@ -304,7 +331,19 @@ const faqs = computed(() => {
                     <div class="grid grid-cols-1 md:grid-cols-12 w-full h-full">
                         <!-- Left side: Image -->
                         <div class="md:col-span-5 relative h-[180px] sm:h-[220px] md:h-full overflow-hidden bg-neutral-100 dark:bg-neutral-950 shrink-0">
-                            <img :src="selectedActivity.image" :alt="selectedActivity.title" class="w-full h-full object-cover" />
+                            <div
+                                class="flex h-full"
+                                :class="{ 'event-gallery-track': getEventImages(selectedActivity).length > 1 }"
+                                :style="galleryTrackStyle(selectedActivity)"
+                            >
+                                <div
+                                    v-for="image in getEventImages(selectedActivity)"
+                                    :key="image"
+                                    class="h-full w-full shrink-0 flex items-center justify-center"
+                                >
+                                    <img :src="image" :alt="selectedActivity.title" class="w-full h-full object-contain" />
+                                </div>
+                            </div>
                             <div class="absolute top-4 left-4 flex gap-1.5 flex-wrap">
                                 <span class="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-indigo-600 text-white shadow-md">
                                     {{ selectedActivity.category }}
@@ -418,5 +457,22 @@ const faqs = computed(() => {
 .modal-enter-from .relative, .modal-leave-to .relative {
   transform: scale(0.92) translateY(20px);
   opacity: 0;
+}
+
+.event-gallery-track {
+  animation: event-gallery-slide linear infinite;
+}
+
+.event-gallery-track > div {
+  flex: 0 0 var(--gallery-item-width);
+}
+
+@keyframes event-gallery-slide {
+  0%, 20% {
+    transform: translateX(0);
+  }
+  80%, 100% {
+    transform: translateX(var(--gallery-shift));
+  }
 }
 </style>

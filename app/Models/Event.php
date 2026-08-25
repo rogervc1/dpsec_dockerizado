@@ -11,7 +11,7 @@ class Event extends Model
 {
     protected $fillable = [
         'title', 'type', 'category', 'event_date', 'time', 'location', 'organizer',
-        'description', 'image_path', 'fb_link', 'is_proyeccion_social', 'sort_order',
+        'description', 'image_path', 'event_images', 'fb_link', 'is_proyeccion_social', 'sort_order',
         'status', 'status_label', 'status_color',
     ];
 
@@ -31,6 +31,7 @@ class Event extends Model
     {
         return [
             'event_date' => 'date',
+            'event_images' => 'array',
             'is_proyeccion_social' => 'boolean',
         ];
     }

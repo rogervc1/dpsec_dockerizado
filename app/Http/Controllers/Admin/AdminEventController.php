@@ -33,11 +33,15 @@ class AdminEventController extends Controller
             'organizer'           => 'required|string|max:255',
             'description'         => 'required|string',
             'image_file'          => 'nullable|file|max:5120',
+            'image_files'         => 'nullable|array|max:10',
+            'image_files.*'       => 'file|max:5120',
             'image_path'          => 'nullable|string|max:1000',
             'fb_link'             => 'nullable|url|max:1000',
             'is_proyeccion_social' => 'boolean',
             'sort_order'          => 'integer',
         ]);
+
+        $gallery = [];
 
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
@@ -52,7 +56,28 @@ class AdminEventController extends Controller
                 return redirect()->back()->with('error', 'Error al guardar la imagen del evento.');
             }
             $validated['image_path'] = Storage::url($path);
+            $gallery[] = $validated['image_path'];
         }
+
+        foreach ($request->file('image_files', []) as $file) {
+            if (!in_array(strtolower($file->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp'])) {
+                return redirect()->back()->withErrors(['image_files' => 'Las imágenes deben ser archivos JPG, JPEG, PNG o WebP.']);
+            }
+
+            $path = $file->store('events', 'public');
+            if ($path === false) {
+                return redirect()->back()->with('error', 'Error al guardar una de las imágenes del evento.');
+            }
+
+            $gallery[] = Storage::url($path);
+        }
+
+        if (count($gallery) > 0) {
+            $validated['event_images'] = array_values(array_unique($gallery));
+            $validated['image_path'] ??= $validated['event_images'][0];
+        }
+
+        unset($validated['image_file'], $validated['image_files']);
 
         Event::create($validated);
 
@@ -71,6 +96,8 @@ class AdminEventController extends Controller
             'organizer'           => 'required|string|max:255',
             'description'         => 'required|string',
             'image_file'          => 'nullable|file|max:5120',
+            'image_files'         => 'nullable|array|max:10',
+            'image_files.*'       => 'file|max:5120',
             'image_path'          => 'nullable|string|max:1000',
             'fb_link'             => 'nullable|url|max:1000',
             'is_proyeccion_social' => 'boolean',
@@ -98,6 +125,34 @@ class AdminEventController extends Controller
             $validated['image_path'] = Storage::url($path);
         }
 
+        if ($request->hasFile('image_files')) {
+            $this->deleteLocalEventImages($event);
+
+            $gallery = [];
+            foreach ($request->file('image_files', []) as $file) {
+                if (!in_array(strtolower($file->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp'])) {
+                    return redirect()->back()->withErrors(['image_files' => 'Las imágenes deben ser archivos JPG, JPEG, PNG o WebP.']);
+                }
+
+                $path = $file->store('events', 'public');
+                if ($path === false) {
+                    return redirect()->back()->with('error', 'Error al guardar una de las nuevas imágenes del evento.');
+                }
+
+                $gallery[] = Storage::url($path);
+            }
+
+            $validated['event_images'] = $gallery;
+            $validated['image_path'] = $gallery[0] ?? $validated['image_path'] ?? $event->image_path;
+        } elseif (isset($validated['image_path'])) {
+            $validated['event_images'] = array_values(array_unique(array_filter([
+                $validated['image_path'],
+                ...($event->event_images ?? []),
+            ])));
+        }
+
+        unset($validated['image_file'], $validated['image_files']);
+
         $event->update($validated);
 
         return redirect()->back()->with('success', 'Evento actualizado correctamente.');
@@ -105,13 +160,23 @@ class AdminEventController extends Controller
 
     public function destroy(Event $event): RedirectResponse
     {
-        // Delete old file
-        if ($event->image_path && !str_starts_with($event->image_path, 'http')) {
-            $oldPath = str_replace('/storage/', '', $event->image_path);
-            Storage::disk('public')->delete($oldPath);
-        }
+        $this->deleteLocalEventImages($event);
 
         $event->delete();
         return redirect()->back()->with('success', 'Evento eliminado.');
+    }
+
+    private function deleteLocalEventImages(Event $event): void
+    {
+        $paths = array_values(array_unique(array_filter([
+            $event->image_path,
+            ...($event->event_images ?? []),
+        ])));
+
+        foreach ($paths as $path) {
+            if (!str_starts_with($path, 'http')) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $path));
+            }
+        }
     }
 }
