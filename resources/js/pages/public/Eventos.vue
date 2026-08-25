@@ -165,7 +165,7 @@ const filteredEvents = computed(() => {
                                 <img
                                     :src="image"
                                     :alt="ev.title"
-                                    class="w-full h-full object-contain"
+                                    class="w-full h-full object-cover"
                                 />
                             </div>
                         </div>
@@ -214,7 +214,7 @@ const filteredEvents = computed(() => {
                             </h3>
 
                             <!-- Description -->
-                            <p class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed font-normal">
+                            <p class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed text-justify font-normal">
                                 {{ ev.description }}
                             </p>
                         </div>
@@ -349,7 +349,7 @@ const filteredEvents = computed(() => {
                                 <!-- Description -->
                                 <div class="space-y-1.5">
                                     <h4 class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Detalles del Evento</h4>
-                                    <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                                    <p class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed text-justify">
                                         {{ selectedEvent.description }}
                                     </p>
                                 </div>

@@ -397,7 +397,7 @@ clearInterval(statsInterval);
                                     :key="image"
                                     class="h-full min-w-0 flex-1 bg-neutral-100 dark:bg-neutral-950"
                                 >
-                                    <img :src="image" :alt="activity.title" class="w-full h-full object-contain" />
+                                    <img :src="image" :alt="activity.title" class="w-full h-full object-cover" />
                                 </div>
                             </div>
                             <!-- Category Badge -->
@@ -434,7 +434,7 @@ clearInterval(statsInterval);
 
                                 <!-- Description -->
                                 <p
-                                    class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed font-normal">
+                                    class="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed text-justify font-normal">
                                     {{ activity.description }}
                                 </p>
                             </div>
@@ -794,7 +794,7 @@ clearInterval(statsInterval);
                                     <h4 class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Detalles
                                     </h4>
                                     <p
-                                        class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                                        class="text-xs sm:text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed text-justify">
                                         {{ selectedActivity.description }}
                                     </p>
                                 </div>

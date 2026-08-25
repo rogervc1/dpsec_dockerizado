@@ -160,6 +160,18 @@ const isDragging = ref(false);
 const dragStart = ref({ x: 0, y: 0 });
 const activeMode = ref<'add' | 'edit'>('add');
 
+const loadCropPreview = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        cropSource.value = event.target?.result as string;
+        zoom.value = 1;
+        positionX.value = 0;
+        positionY.value = 0;
+        debouncedCrop();
+    };
+    reader.readAsDataURL(file);
+};
+
 const onEventImagesSelected = (e: Event, mode: 'add' | 'edit') => {
     activeMode.value = mode;
     const target = e.target as HTMLInputElement;
@@ -174,6 +186,10 @@ const onEventImagesSelected = (e: Event, mode: 'add' | 'edit') => {
     }
 
     cropSource.value = '';
+
+    if (files[0]) {
+        loadCropPreview(files[0]);
+    }
 };
 
 const startDrag = (e: MouseEvent | TouchEvent) => {
@@ -270,9 +286,9 @@ return;
                 const croppedFile = new File([blob], 'event_image.webp', { type: 'image/webp' });
 
                 if (activeMode.value === 'edit') {
-                    editEventForm.image_file = croppedFile;
+                    editEventForm.image_files = [croppedFile, ...editEventForm.image_files.slice(1)];
                 } else {
-                    eventForm.image_file = croppedFile;
+                    eventForm.image_files = [croppedFile, ...eventForm.image_files.slice(1)];
                 }
             }
         }, 'image/webp', 0.85);
@@ -1045,7 +1061,7 @@ const deleteDoc = (id: number) => {
                         
                         <!-- Current image preview if exists -->
                         <div v-if="editEventForm.image_path && !cropSource" class="mb-2 relative w-full h-32 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-                            <img :src="editEventForm.image_path" class="w-full h-full object-contain" />
+                            <img :src="editEventForm.image_path" class="w-full h-full object-cover" />
                             <div class="absolute inset-0 bg-black/45 flex items-center justify-center text-xs font-bold text-white">Imagen Actual</div>
                         </div>
 
