@@ -496,7 +496,10 @@ const openEditEvent = (ev: EventItem) => {
     editEventForm.sort_order = ev.sort_order;
     isEditEventOpen.value = true;
 
-    const currentImage = ev.cover_image_path || ev.image_path;
+    // Load the original image for editing. The cover is already a generated
+    // 16:9 crop and must only be used for the public preview, not as the source
+    // of a new crop.
+    const currentImage = ev.image_path || ev.cover_image_path;
 
     if (currentImage) {
         loadCropPreviewFromUrl(currentImage);
