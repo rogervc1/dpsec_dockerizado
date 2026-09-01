@@ -166,6 +166,9 @@ const dragStart = ref({ x: 0, y: 0 });
 const activeMode = ref<'add' | 'edit'>('add');
 const previewImageIndex = ref(0);
 const previewImageSize = ref({ width: 0, height: 0 });
+// The crop area is 16:9, but the source image can have any aspect ratio.
+// Keep the smallest useful zoom so the whole source image can be displayed.
+const minimumZoom = ref(0.25);
 const filePreviewUrls = new WeakMap<File, string>();
 
 const getFilePreview = (file: File) => {
@@ -174,6 +177,24 @@ const getFilePreview = (file: File) => {
     }
 
     return filePreviewUrls.get(file) as string;
+};
+
+const getMinimumZoom = () => {
+    const container = dragContainerRef.value;
+    const containerWidth = container?.clientWidth ?? 400;
+    const containerHeight = container?.clientHeight ?? 225;
+    const { width, height } = previewImageSize.value;
+
+    if (!width || !height) {
+        return 0.25;
+    }
+
+    const imageRatio = width / height;
+    const containerRatio = containerWidth / containerHeight;
+    const baseWidth = imageRatio > containerRatio ? containerHeight * imageRatio : containerWidth;
+    const baseHeight = imageRatio > containerRatio ? containerHeight : containerWidth / imageRatio;
+
+    return Math.min(1, containerWidth / baseWidth, containerHeight / baseHeight);
 };
 
 const loadCropPreview = (file: File) => {
@@ -186,10 +207,11 @@ const loadCropPreview = (file: File) => {
                 width: preview.naturalWidth,
                 height: preview.naturalHeight,
             };
+            minimumZoom.value = getMinimumZoom();
+            zoom.value = minimumZoom.value;
             clampCropPosition();
         };
         preview.src = cropSource.value;
-        zoom.value = 1;
         positionX.value = 0;
         positionY.value = 0;
         debouncedCrop();
@@ -1084,7 +1106,7 @@ const deleteDoc = (id: number) => {
                                 <span class="text-[10px] font-bold text-neutral-500">Zoom:</span>
                                 <input 
                                     type="range" 
-                                    min="1" 
+                                    :min="minimumZoom"
                                     max="3" 
                                     step="0.05" 
                                     v-model.number="zoom" 
@@ -1266,7 +1288,7 @@ const deleteDoc = (id: number) => {
                                 <span class="text-[10px] font-bold text-neutral-500">Zoom:</span>
                                 <input 
                                     type="range" 
-                                    min="1" 
+                                    :min="minimumZoom"
                                     max="3" 
                                     step="0.05" 
                                     v-model.number="zoom" 
