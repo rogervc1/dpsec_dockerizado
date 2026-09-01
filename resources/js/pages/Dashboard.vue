@@ -393,8 +393,9 @@ return;
         const destY = defaultY + (positionY.value * scaleY);
 
         // Draw image onto canvas
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, targetWidth, targetHeight);
+        // Keep letterboxed areas transparent instead of adding a black
+        // background when the complete source image does not fill 16:9.
+        ctx.clearRect(0, 0, targetWidth, targetHeight);
         ctx.drawImage(img, destX, destY, drawWidth, drawHeight);
 
         // Export as WebP blob
@@ -1081,7 +1082,7 @@ const deleteDoc = (id: number) => {
                             <!-- Card Image container box -->
                             <div 
                                 ref="dragContainerRef"
-                                class="h-52 w-full relative overflow-hidden bg-neutral-150 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl cursor-move select-none"
+                                class="aspect-video w-full relative overflow-hidden bg-neutral-150 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl cursor-move select-none"
                                 @mousedown="startDrag"
                                 @mousemove="onDrag"
                                 @mouseup="stopDrag"
@@ -1263,7 +1264,7 @@ const deleteDoc = (id: number) => {
                             <!-- Card Image container box -->
                             <div 
                                 ref="dragContainerRef"
-                                class="h-52 w-full relative overflow-hidden bg-neutral-150 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl cursor-move select-none"
+                                class="aspect-video w-full relative overflow-hidden bg-neutral-150 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl cursor-move select-none"
                                 @mousedown="startDrag"
                                 @mousemove="onDrag"
                                 @mouseup="stopDrag"
