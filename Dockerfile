@@ -16,23 +16,21 @@ RUN composer install \
     --no-interaction \
     --no-plugins \
     --no-scripts \
-    --prefer-dist \
-    --no-dev
+    --prefer-dist
 
 # 1.2 Copiar el código fuente y optimizar autoloader
 COPY . .
-RUN composer dump-autoload --optimize --no-dev
+RUN composer dump-autoload --optimize
 
 # 1.3 Instalar dependencias de Frontend y Compilar
-# Ahora PHP está disponible, así que los plugins de Vite que usen artisan funcionarán
 RUN npm ci
 RUN npm run build \
-    && rm -rf node_modules # Limpiamos para no copiar esta carpeta pesada a la imagen final
+    && rm -rf node_modules
 
 # 2. Final Production Image
 FROM serversideup/php:8.3-fpm-nginx-alpine
 
-# Instalar extensión PHP GD (requerida por dompdf para generar certificados PDF)
+# Instalar extensión PHP GD
 USER root
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 RUN chmod +x /usr/local/bin/install-php-extensions \
@@ -46,7 +44,6 @@ COPY --from=builder --chown=www-data:www-data /app/ ./
 # Copiar y preparar el script de inicio automático
 COPY docker/startup.sh /etc/entrypoint.d/99-startup.sh
 
-# Cambiar a root para crear carpetas, permisos y preparar el script
 USER root
 
 RUN chmod +x /etc/entrypoint.d/99-startup.sh
@@ -55,4 +52,3 @@ RUN chmod +x /etc/entrypoint.d/99-startup.sh
 RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views storage/app/public \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
-
