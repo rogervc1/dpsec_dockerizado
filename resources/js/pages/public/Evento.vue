@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ArrowDown, ArrowLeft, Calendar, Check, Clock, ExternalLink, FileText, MapPin, Trophy, UserCheck, Users } from '@lucide/vue';
+import { ArrowLeft, Calendar, Check, Clock, ExternalLink, FileText, MapPin, Trophy, UserCheck, Users } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 
@@ -12,17 +12,31 @@ const eventView = computed(() => {
     const e = props.event;
     const dateValue = e.event_date ? String(e.event_date).slice(0, 10) : '';
     const date = dateValue ? new Date(`${dateValue}T00:00:00`) : null;
-    const words = String(e.title || 'Evento especial').trim().split(/\s+/);
-    const splitAt = Math.max(1, Math.ceil(words.length / 2));
+    const title = String(e.title || 'Evento especial').trim();
+    const words = title.split(/\s+/);
+    let splitAt = Math.max(1, Math.ceil(words.length / 2));
+    if (words.length > 1) {
+        let bestDistance = Number.POSITIVE_INFINITY;
+        for (let index = 1; index < words.length; index += 1) {
+            const firstLength = words.slice(0, index).join(' ').length;
+            const secondLength = words.slice(index).join(' ').length;
+            const distance = Math.abs(firstLength - secondLength);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                splitAt = index;
+            }
+        }
+    }
     return {
         ...e,
         image: e.cover_image_path || e.image_path,
+        title,
         titleFirst: words.slice(0, splitAt).join(' '),
-        titleSecond: words.slice(splitAt).join(' '),
+        titleSecond: words.slice(splitAt).join(' ') || '\u00a0',
+        titleMaxChars: Math.max(words.slice(0, splitAt).join(' ').length, words.slice(splitAt).join(' ').length, 1),
         date: date?.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) || 'Fecha por confirmar',
         registrationLink: e.registration_link,
         fbLink: e.fb_link,
-        statusLabel: e.status === 'Proximos' ? 'Próximo' : e.status === 'EnCurso' ? 'En curso' : 'Finalizado',
         targetDate: date?.getTime() ?? null,
         mapLink: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location || '')}`,
     };
@@ -40,11 +54,11 @@ const countdown = computed(() => {
 });
 
 const sections = [
-    { id: 'documentos', label: 'Documentos', icon: FileText },
-    { id: 'cronograma', label: 'Cronograma', icon: Calendar },
-    { id: 'participantes', label: 'Registro', icon: Users },
-    { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin },
-    { id: 'resultados', label: 'Resultados', icon: Trophy },
+    { id: 'documentos', label: 'Documentos', icon: FileText, iconTint: 'bg-sky-300/20 text-sky-100' },
+    { id: 'cronograma', label: 'Cronograma', icon: Calendar, iconTint: 'bg-indigo-300/20 text-indigo-100' },
+    { id: 'participantes', label: 'Registro', icon: Users, iconTint: 'bg-emerald-300/20 text-emerald-100' },
+    { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, iconTint: 'bg-violet-300/20 text-violet-100' },
+    { id: 'resultados', label: 'Resultados', icon: Trophy, iconTint: 'bg-orange-300/20 text-orange-100' },
 ];
 
 onMounted(() => { countdownInterval = setInterval(() => { now.value = Date.now(); }, 1000); });
@@ -59,58 +73,48 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
             <img v-if="eventView.image" :src="eventView.image" :alt="eventView.title" class="absolute inset-0 -z-20 size-full object-cover" />
             <div class="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/30" />
             <div class="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/20" />
-            <div class="mx-auto grid w-full max-w-7xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-10 lg:py-20">
-                <div class="max-w-2xl">
-                    <Link href="/eventos" class="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-white/75 transition hover:text-white">
+            <Link href="/eventos" class="absolute right-5 top-5 z-10 inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/30 px-4 py-2.5 text-xs font-bold text-white/85 shadow-lg backdrop-blur transition hover:bg-black/50 hover:text-white sm:right-8 sm:top-7 sm:text-sm">
                         <ArrowLeft class="size-4" /> Volver a eventos
-                    </Link>
-                    <div class="mb-5 flex flex-wrap items-center gap-2">
-                        <span class="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider backdrop-blur">{{ eventView.type }}</span>
-                        <span class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider" :class="eventView.status === 'Proximos' ? 'bg-amber-400 text-slate-950' : eventView.status === 'EnCurso' ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white'">{{ eventView.statusLabel }}</span>
+            </Link>
+            <div class="mx-auto flex min-h-[calc(100svh-6rem)] w-full max-w-7xl flex-col gap-6 px-5 pb-7 pt-24 sm:px-8 lg:justify-between lg:gap-5 lg:px-10 lg:py-14">
+                <div class="[container-type:inline-size]">
+                    <div class="mb-5 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-white/90 sm:text-base">
+                        <span class="inline-flex items-center gap-2"><Calendar class="size-4 shrink-0 text-amber-300" />{{ eventView.date }}<template v-if="eventView.time"> · {{ eventView.time }}</template></span>
+                        <span v-if="eventView.location" class="inline-flex items-center gap-2"><MapPin class="size-4 shrink-0 text-amber-300" />{{ eventView.location }}</span>
                     </div>
-                    <h1 class="text-5xl font-black leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl">
-                        <span class="block text-white">{{ eventView.titleFirst }}</span>
-                        <span v-if="eventView.titleSecond" class="mt-2 block text-amber-300">{{ eventView.titleSecond }}</span>
+                    <h1 :aria-label="eventView.title" :style="{ fontSize: `min(6.25rem, calc(200cqw / ${eventView.titleMaxChars}))` }" class="h-[2.05em] overflow-hidden font-black leading-[1.02] tracking-tight text-balance">
+                        <span class="block whitespace-nowrap text-white">{{ eventView.titleFirst }}</span>
+                        <span class="block whitespace-nowrap text-amber-300">{{ eventView.titleSecond }}</span>
                     </h1>
-                    <div class="mt-8 flex flex-col gap-3 text-sm font-medium text-white/85 sm:flex-row sm:flex-wrap sm:gap-x-6">
-                        <span class="inline-flex items-center gap-2"><Calendar class="size-4 text-amber-300" />{{ eventView.date }}</span>
-                        <span v-if="eventView.time" class="inline-flex items-center gap-2"><Clock class="size-4 text-amber-300" />{{ eventView.time }}</span>
-                        <span v-if="eventView.location" class="inline-flex items-center gap-2"><MapPin class="size-4 text-amber-300" />{{ eventView.location }}</span>
-                    </div>
-                    <button class="mt-9 inline-flex items-center gap-2 text-sm font-bold text-white/80 transition hover:text-amber-300" @click="scrollTo('sobre-el-evento')">
-                        Conoce el evento <ArrowDown class="size-4" />
-                    </button>
                 </div>
 
-                <div class="w-full max-w-xl lg:justify-self-end">
-                    <p class="mb-4 text-xs font-extrabold uppercase tracking-[0.25em] text-amber-200">{{ eventView.status === 'Pasados' ? 'Evento finalizado' : eventView.status === 'EnCurso' ? 'El evento está en curso' : 'El evento comienza en' }}</p>
-                    <div class="grid grid-cols-4 gap-2.5 sm:gap-4">
-                        <div v-for="unit in countdown" :key="unit.label" class="rounded-2xl border border-white/20 bg-black/30 px-2 py-4 text-center shadow-xl backdrop-blur-md sm:rounded-3xl sm:px-4 sm:py-7">
-                            <div class="text-3xl font-black tabular-nums sm:text-5xl lg:text-6xl">{{ unit.value }}</div>
-                            <div class="mt-2 text-[10px] font-bold uppercase tracking-wider text-white/65 sm:text-xs">{{ unit.label }}</div>
+                <div class="mt-auto">
+                    <div class="grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-6">
+                        <div id="sobre-el-evento" class="scroll-mt-32 rounded-2xl border border-white/15 bg-black/25 p-4 backdrop-blur-md sm:p-5">
+                            <h2 class="text-xs font-extrabold uppercase tracking-[0.2em] text-amber-200">Sobre el evento</h2>
+                            <p class="mt-2 line-clamp-3 text-sm leading-6 text-white/85 sm:text-base">{{ eventView.description }}</p>
+                        </div>
+
+                        <div class="w-full lg:justify-self-end">
+                            <p class="mb-3 text-xs font-extrabold uppercase tracking-[0.25em] text-amber-200">{{ eventView.status === 'Pasados' ? 'Evento finalizado' : eventView.status === 'EnCurso' ? 'El evento está en curso' : 'El evento comienza en' }}</p>
+                            <div class="grid grid-cols-4 gap-2 sm:gap-3">
+                                <div v-for="unit in countdown" :key="unit.label" class="rounded-2xl border border-white/20 bg-black/30 px-2 py-3 text-center shadow-xl backdrop-blur-md sm:px-3 sm:py-4">
+                                    <div class="text-2xl font-black tabular-nums sm:text-4xl lg:text-5xl">{{ unit.value }}</div>
+                                    <div class="mt-1 text-[9px] font-bold uppercase tracking-wider text-white/65 sm:text-[10px]">{{ unit.label }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div id="sobre-el-evento" class="mt-6 scroll-mt-32 rounded-2xl border border-white/15 bg-black/25 p-5 backdrop-blur-md sm:p-6">
-                        <h2 class="text-xs font-extrabold uppercase tracking-[0.2em] text-amber-200">Sobre el evento</h2>
-                        <p class="mt-3 text-sm leading-7 text-white/85 sm:text-base">{{ eventView.description }}</p>
-                        <div class="mt-5 grid gap-3 border-t border-white/15 pt-4 text-xs text-white/70 sm:grid-cols-2">
-                            <p><span class="block font-bold uppercase tracking-wider text-white/45">Organiza</span>{{ eventView.organizer }}</p>
-                            <p><span class="block font-bold uppercase tracking-wider text-white/45">Categoría</span>{{ eventView.category }}</p>
-                        </div>
+
+                    <div class="mt-3 flex w-full gap-2 overflow-x-auto pb-1 sm:mt-4 sm:gap-3" aria-label="Secciones del evento">
+                        <button v-for="section in sections" :key="section.id" @click="scrollTo(section.id)" class="flex min-h-14 min-w-[8rem] flex-1 items-center gap-2 rounded-2xl border border-white/15 bg-black/25 px-2.5 py-2 text-left text-[11px] font-extrabold text-white shadow-lg backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/15 sm:min-w-0 sm:gap-3 sm:px-4 sm:text-sm">
+                            <span class="grid size-9 shrink-0 place-items-center rounded-xl border border-white/10 shadow-sm sm:size-10" :class="section.iconTint"><component :is="section.icon" class="size-4 sm:size-5" /></span>
+                            <span>{{ section.label }}</span>
+                        </button>
                     </div>
                 </div>
             </div>
         </section>
-
-        <nav aria-label="Secciones del evento" class="sticky top-[7.5rem] z-30 border-b border-neutral-200 bg-white/95 shadow-sm backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95 lg:top-24">
-            <div class="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-3 sm:grid sm:grid-cols-5 sm:gap-3 sm:px-8 lg:px-10">
-                <button v-for="(section, index) in sections" :key="section.id" @click="scrollTo(section.id)" class="flex min-w-max items-center justify-center gap-2 rounded-xl border border-neutral-200 px-4 py-3 text-xs font-bold text-neutral-700 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-800 dark:border-neutral-800 dark:text-neutral-200 dark:hover:bg-amber-400/10 dark:hover:text-amber-200 sm:min-w-0 sm:px-2 sm:text-sm">
-                    <component :is="section.icon" class="size-4 shrink-0" />
-                    <span>{{ section.label }}</span>
-                    <span class="hidden text-[10px] text-neutral-400 lg:inline">0{{ index + 1 }}</span>
-                </button>
-            </div>
-        </nav>
 
         <main class="bg-neutral-50 dark:bg-neutral-950">
             <section id="documentos" class="scroll-mt-40 border-b border-neutral-200 px-5 py-16 dark:border-neutral-800 sm:px-8 md:py-24">
