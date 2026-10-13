@@ -15,7 +15,8 @@ Route::get('/nosotros', AboutUsController::class)->name('about-us');
 Route::get('/proyeccion-social', ProyeccionSocialController::class)->name('proyeccion-social');
 Route::get('/seguimiento-graduado', SeguimientoGraduadoController::class)->name('seguimiento-graduado');
 Route::get('/documentos', DocumentosController::class)->name('documentos');
-Route::get('/eventos', EventosController::class)->name('eventos');
+Route::get('/eventos', [EventosController::class, 'index'])->name('eventos');
+Route::get('/eventos/{event}', [EventosController::class, 'show'])->name('eventos.show');
 Route::inertia('/sandbox', 'public/Sandbox')->name('sandbox');
 
 // Public Certificates Routes

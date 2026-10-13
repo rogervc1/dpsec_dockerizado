@@ -24,8 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Forzar HTTPS en producción o cuando hay un proxy reverso
-        if (config('app.env') !== 'local' || isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+        // Forzar HTTPS solo si se configura explícitamente o la petición ya es segura.
+        // El entorno Docker local publica HTTP y no debe generar URLs HTTPS inválidas.
+        if (config('app.force_https') || request()->isSecure()) {
             URL::forceScheme('https');
         }
 

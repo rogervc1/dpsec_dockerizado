@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Link } from '@inertiajs/vue3';
 import {
     Calendar,
     MapPin,
@@ -242,12 +243,26 @@ const filteredEvents = computed(() => {
                             </p>
                         </div>
 
-                        <!-- Divider and Read More -->
-                        <div class="border-t border-neutral-100 dark:border-neutral-800/60 w-full pt-4 mt-5 flex items-center justify-between">
+                        <!-- Divider and actions -->
+                        <div class="border-t border-neutral-100 dark:border-neutral-800/60 w-full pt-4 mt-5 flex items-center justify-between gap-3">
                             <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 flex items-center gap-1 transition-colors">
                                 Leer más detalles
                                 <ChevronRight class="size-3.5" />
                             </span>
+                            <Link
+                                v-if="ev.id"
+                                :href="`/eventos/${ev.id}`"
+                                @click.stop
+                                class="shrink-0"
+                            >
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    class="rounded-xl text-[11px] font-semibold h-8 px-3 cursor-pointer"
+                                >
+                                    Ver evento
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -380,22 +395,34 @@ const filteredEvents = computed(() => {
 
                             <!-- Footer Actions -->
                             <div class="border-t border-neutral-100 dark:border-neutral-800/80 pt-4 mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <a
-                                v-if="selectedEvent.status !== 'Pasados' && selectedEvent.registrationLink"
-                                    :href="selectedEvent.registrationLink"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="w-full sm:w-auto"
-                                    @click.stop
-                                >
-                                    <Button size="sm" class="w-full sm:w-auto rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
-                                        <UserCheck class="size-3.5" />
-                                        Inscribirse/Participar
-                                    </Button>
-                                </a>
-                                <span v-else class="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-500 px-4 py-1.5 rounded-lg font-semibold uppercase tracking-wider w-full sm:w-auto text-center">
-                                    Finalizado
-                                </span>
+                                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                                    <Link
+                                        v-if="selectedEvent.id"
+                                        :href="`/eventos/${selectedEvent.id}`"
+                                        class="w-full sm:w-auto"
+                                        @click.stop
+                                    >
+                                        <Button size="sm" variant="outline" class="w-full sm:w-auto rounded-xl text-xs font-semibold cursor-pointer">
+                                            Ver evento
+                                        </Button>
+                                    </Link>
+                                    <a
+                                    v-if="selectedEvent.status !== 'Pasados' && selectedEvent.registrationLink"
+                                        :href="selectedEvent.registrationLink"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="w-full sm:w-auto"
+                                        @click.stop
+                                    >
+                                        <Button size="sm" class="w-full sm:w-auto rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                                            <UserCheck class="size-3.5" />
+                                            Inscribirse/Participar
+                                        </Button>
+                                    </a>
+                                    <span v-else-if="selectedEvent.status === 'Pasados'" class="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-500 px-4 py-1.5 rounded-lg font-semibold uppercase tracking-wider w-full sm:w-auto text-center">
+                                        Finalizado
+                                    </span>
+                                </div>
 
                                 <a
                                     :href="selectedEvent.fbLink"

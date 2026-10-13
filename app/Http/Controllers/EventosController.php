@@ -9,13 +9,20 @@ use Inertia\Response;
 
 class EventosController extends Controller
 {
-    public function __invoke(): Response
+    public function index(): Response
     {
         return Inertia::render('public/Eventos', [
             'events' => Event::active()->get(),
             'sections' => PageSection::forPage('eventos')
                 ->get()
                 ->keyBy('section_key'),
+        ]);
+    }
+
+    public function show(Event $event): Response
+    {
+        return Inertia::render('public/Evento', [
+            'event' => $event,
         ]);
     }
 }
