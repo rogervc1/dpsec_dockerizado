@@ -6,7 +6,7 @@ use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminCertificateController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'approved.admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard overview
     Route::get('/', AdminDashboardController::class)->name('dashboard');
 

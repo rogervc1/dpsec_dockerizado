@@ -8,7 +8,6 @@ interface Certificate {
     uuid: string;
     code: string;
     recipient_name: string;
-    recipient_document: string;
     role: string;
     issue_date: string;
     template?: {
@@ -16,14 +15,14 @@ interface Certificate {
     };
 }
 
-const documentNumber = ref('');
+const certificateCode = ref('');
 const loading = ref(false);
 const searched = ref(false);
 const certificates = ref<Certificate[]>([]);
 const error = ref('');
 
 const searchCertificates = async () => {
-    if (!documentNumber.value.trim()) {
+    if (!certificateCode.value.trim()) {
 return;
 }
     
@@ -39,7 +38,7 @@ return;
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
             },
-            body: JSON.stringify({ document: documentNumber.value }),
+            body: JSON.stringify({ code: certificateCode.value }),
         });
 
         if (!response.ok) {
@@ -77,7 +76,7 @@ return '';
                 <span class="text-xs font-bold uppercase tracking-widest text-blue-400">Verificación e Impresión</span>
                 <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">Certificados Académicos</h1>
                 <p class="text-sm md:text-base text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-                    Accede a tus constancias y certificados de eventos organizados por la DPSEC de la UNA Puno. Introduce tu documento de identidad para descargarlos de forma inmediata.
+                    Accede a tus constancias y certificados de eventos organizados por la DPSEC de la UNA Puno. Introduce el código único de tu certificado para verificarlo y descargarlo.
                 </p>
 
                 <!-- Search Card -->
@@ -88,9 +87,9 @@ return '';
                                 <Award class="w-5 h-5" />
                             </span>
                             <input 
-                                v-model="documentNumber"
+                                v-model="certificateCode"
                                 type="text" 
-                                placeholder="Ingresa tu DNI o Código de estudiante" 
+                                placeholder="Ingresa el código del certificado"
                                 class="w-full pl-10 pr-4 py-3 bg-neutral-950 border border-neutral-800 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
                                 required
                             />
@@ -168,7 +167,7 @@ return '';
                                     Verificar en línea
                                 </a>
                                 <a 
-                                    :href="'/certificados/descargar/' + cert.id" 
+                                    :href="'/certificados/descargar/' + cert.uuid"
                                     class="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-850 dark:hover:bg-neutral-750 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all shadow-sm cursor-pointer"
                                 >
                                     <Download class="w-3.5 h-3.5" />

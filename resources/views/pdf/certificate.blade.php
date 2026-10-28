@@ -66,6 +66,24 @@
             margin: 0;
             padding: 0;
         }
+
+        .verification {
+            position: absolute;
+            right: 12mm;
+            bottom: 10mm;
+            width: 28mm;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 7pt;
+            color: #374151;
+        }
+
+        .verification svg {
+            display: block;
+            width: 25mm;
+            height: 25mm;
+            margin: 0 auto 2mm;
+        }
     </style>
 </head>
 <body>
@@ -78,6 +96,11 @@
     <!-- Role (e.g. Participante, Ponente) -->
     <div class="role-field">
         En calidad de <strong>{{ $certificate->role ?? 'Participante' }}</strong>
+    </div>
+
+    <div class="verification">
+        {!! $qrSvg !!}
+        Verificación oficial
     </div>
 
 </body>

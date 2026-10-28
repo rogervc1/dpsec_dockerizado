@@ -7,7 +7,6 @@ interface Certificate {
     uuid: string;
     code: string;
     recipient_name: string;
-    recipient_document: string;
     role: string;
     issue_date: string;
     template?: {
@@ -59,10 +58,6 @@ return '';
                         <span class="text-xs text-neutral-400 block font-semibold uppercase">CÓDIGO DE REGISTRO</span>
                         <span class="font-mono text-sm font-bold text-neutral-800 dark:text-neutral-200">{{ certificate.code }}</span>
                     </div>
-                    <div>
-                        <span class="text-xs text-neutral-400 block font-semibold uppercase">ID DE VERIFICACIÓN (UUID)</span>
-                        <span class="font-mono text-xs text-neutral-500">{{ certificate.uuid }}</span>
-                    </div>
                 </div>
 
                 <!-- Info Grid -->
@@ -77,9 +72,6 @@ return '';
                             <span class="font-bold text-neutral-950 dark:text-white text-base md:text-lg">
                                 {{ certificate.recipient_name }}
                             </span>
-                            <p class="text-xs text-neutral-500 dark:text-neutral-400">
-                                DNI / Código: {{ certificate.recipient_document }}
-                            </p>
                         </div>
                     </div>
 
@@ -126,7 +118,7 @@ return '';
                 <!-- Action buttons -->
                 <div class="pt-6 border-t border-neutral-100 dark:border-neutral-800 flex flex-col sm:flex-row gap-3">
                     <a 
-                        :href="'/certificados/descargar/' + certificate.id" 
+                        :href="'/certificados/descargar/' + certificate.uuid"
                         class="flex-1 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-blue-500/10 cursor-pointer transition-all"
                     >
                         <Download class="w-4 h-4" />

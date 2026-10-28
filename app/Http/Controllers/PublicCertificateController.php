@@ -10,6 +10,11 @@ use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\Response;
+use BaconQrCode\Common\ErrorCorrectionLevel;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 
 class PublicCertificateController extends Controller
 {
@@ -22,20 +27,27 @@ class PublicCertificateController extends Controller
     }
 
     /**
-     * Search for certificates by DNI/Document.
+     * Search for a certificate using its public code.
      */
     public function search(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
-            'document' => 'required|string|max:50',
+            'code' => 'required|string|max:50',
         ]);
 
         $certificates = Certificate::with('template')
-            ->where('recipient_document', trim($request->document))
+            ->where('code', trim($request->code))
             ->get();
 
         return response()->json([
-            'certificates' => $certificates,
+            'certificates' => $certificates->map(fn (Certificate $certificate) => [
+                'uuid' => $certificate->uuid,
+                'code' => $certificate->code,
+                'recipient_name' => $certificate->recipient_name,
+                'role' => $certificate->role,
+                'issue_date' => $certificate->issue_date,
+                'template' => $certificate->template ? ['name' => $certificate->template->name] : null,
+            ])->values(),
         ]);
     }
 
@@ -50,7 +62,14 @@ class PublicCertificateController extends Controller
             ->firstOrFail();
 
         return Inertia::render('public/VerificarCertificado', [
-            'certificate' => $certificate,
+            'certificate' => [
+                'uuid' => $certificate->uuid,
+                'code' => $certificate->code,
+                'recipient_name' => $certificate->recipient_name,
+                'role' => $certificate->role,
+                'issue_date' => $certificate->issue_date,
+                'template' => $certificate->template ? ['name' => $certificate->template->name] : null,
+            ],
         ]);
     }
 
@@ -125,6 +144,8 @@ class PublicCertificateController extends Controller
             'settings' => $settings,
             'fontStyles' => $fontStyles,
             'bgPath' => $bgPath,
+            'verificationUrl' => route('certificates.verify', ['identifier' => $certificate->code]),
+            'qrSvg' => $this->verificationQr($certificate),
         ])->render();
 
         // 4. Configure DomPDF and generate
@@ -147,6 +168,8 @@ class PublicCertificateController extends Controller
                 'settings' => $settings,
                 'fontStyles' => '',
                 'bgPath' => $bgPath,
+                'verificationUrl' => route('certificates.verify', ['identifier' => $certificate->code]),
+                'qrSvg' => $this->verificationQr($certificate),
             ])->render();
 
             $pdf = Pdf::loadHTML($fallbackHtml);
@@ -157,5 +180,18 @@ class PublicCertificateController extends Controller
             $filename = 'certificado-' . str_replace(' ', '-', strtolower($certificate->recipient_name)) . '.pdf';
             return $pdf->download($filename);
         }
+    }
+
+    private function verificationQr(Certificate $certificate): string
+    {
+        $renderer = new ImageRenderer(
+            new RendererStyle(180, 8),
+            new SvgImageBackEnd(),
+        );
+
+        return (new Writer($renderer))->writeString(
+            route('certificates.verify', ['identifier' => $certificate->code]),
+            ecLevel: ErrorCorrectionLevel::M(),
+        );
     }
 }
