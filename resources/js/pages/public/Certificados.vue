@@ -35,6 +35,10 @@ const certificates = ref<Certificate[]>([]);
 const error = ref('');
 
 const renderRecaptcha = () => {
+    if (recaptchaWidgetId.value !== null) {
+        return;
+    }
+
     if (window.grecaptcha && recaptchaContainer.value && recaptchaSiteKey) {
         recaptchaWidgetId.value = window.grecaptcha.render(recaptchaContainer.value, {
             sitekey: recaptchaSiteKey,
@@ -44,10 +48,18 @@ const renderRecaptcha = () => {
     }
 };
 
+const waitForRecaptcha = (attempt = 0) => {
+    renderRecaptcha();
+
+    if (recaptchaWidgetId.value === null && attempt < 40) {
+        window.setTimeout(() => waitForRecaptcha(attempt + 1), 250);
+    }
+};
+
 onMounted(() => {
     const existingScript = document.getElementById('google-recaptcha-script') as HTMLScriptElement | null;
     if (existingScript) {
-        renderRecaptcha();
+        waitForRecaptcha();
         return;
     }
 
@@ -56,7 +68,7 @@ onMounted(() => {
     script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
     script.async = true;
     script.defer = true;
-    script.onload = renderRecaptcha;
+    script.onload = () => waitForRecaptcha();
     document.head.appendChild(script);
 });
 
