@@ -1,6 +1,9 @@
 @php
     $nameY = $settings['name_field']['y'] ?? '45%';
     $roleY = $settings['role_field']['y'] ?? '68%';
+    $qrX = $settings['qr_code']['x'] ?? '83%';
+    $qrY = $settings['qr_code']['y'] ?? '82%';
+    $qrSize = $settings['qr_code']['size'] ?? 25;
 
     // Apply a fine -1.2% offset so DomPDF baseline matches HTML preview
     if (str_ends_with($nameY, '%')) {
@@ -69,9 +72,9 @@
 
         .verification {
             position: absolute;
-            right: 12mm;
-            bottom: 10mm;
-            width: 28mm;
+            left: {{ $qrX }};
+            top: {{ $qrY }};
+            width: {{ $qrSize }}mm;
             text-align: center;
             font-family: Arial, sans-serif;
             font-size: 7pt;
@@ -80,8 +83,8 @@
 
         .verification img {
             display: block;
-            width: 25mm;
-            height: 25mm;
+            width: {{ $qrSize }}mm;
+            height: {{ $qrSize }}mm;
             margin: 0 auto 2mm;
         }
     </style>

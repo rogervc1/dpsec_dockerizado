@@ -79,7 +79,7 @@ const deleteFont = (id: number) => {
 // --- Template Creation Form ---
 const showAddTemplate = ref(false);
 const editingTemplate = ref<TemplateItem | null>(null);
-const modalTab = ref<'general' | 'name' | 'role'>('general');
+const modalTab = ref<'general' | 'name' | 'role' | 'qr'>('general');
 
 const templateForm = useForm({
     name: '',
@@ -91,11 +91,13 @@ const templateForm = useForm({
 const defaultSettings = {
     name_field: { x: '0%', y: '45%', font_size: '32pt', color: '#111827', font_family: 'Helvetica' },
     role_field: { x: '0%', y: '68%', font_size: '16pt', color: '#4b5563', font_family: 'Helvetica' },
+    qr_code: { x: '83%', y: '82%', size: 25 },
 };
 
 // Reactive settings for UI binding
 const nameSettings = ref({ ...defaultSettings.name_field });
 const roleSettings = ref({ ...defaultSettings.role_field });
+const qrSettings = ref({ ...defaultSettings.qr_code });
 
 const fontOptions = computed(() => {
     const list = ['Helvetica', 'Times-Roman', 'Courier', 'Arial'];
@@ -146,12 +148,14 @@ const fontStylesHtml = computed(() => {
 const syncSettingsToForm = (settingsObj: any) => {
     nameSettings.value = { ...defaultSettings.name_field, ...(settingsObj?.name_field || {}) };
     roleSettings.value = { ...defaultSettings.role_field, ...(settingsObj?.role_field || {}) };
+    qrSettings.value = { ...defaultSettings.qr_code, ...(settingsObj?.qr_code || {}) };
 };
 
 const syncFormToSettings = () => {
     const fullSettings = {
         name_field: nameSettings.value,
         role_field: roleSettings.value,
+        qr_code: qrSettings.value,
     };
     templateForm.settings = JSON.stringify(fullSettings, null, 2);
 };
@@ -610,6 +614,7 @@ const filterByTemplate = () => {
                                 <button type="button" @click="modalTab = 'general'" :class="modalTab === 'general' ? 'border-indigo-500 font-bold text-indigo-600' : 'border-transparent text-neutral-500'" class="px-2 py-1 border-b-2 whitespace-nowrap cursor-pointer">General</button>
                                 <button type="button" @click="modalTab = 'name'" :class="modalTab === 'name' ? 'border-indigo-500 font-bold text-indigo-600' : 'border-transparent text-neutral-500'" class="px-2 py-1 border-b-2 whitespace-nowrap cursor-pointer">Nombre</button>
                                 <button type="button" @click="modalTab = 'role'" :class="modalTab === 'role' ? 'border-indigo-500 font-bold text-indigo-600' : 'border-transparent text-neutral-500'" class="px-2 py-1 border-b-2 whitespace-nowrap cursor-pointer">Rol</button>
+                                <button type="button" @click="modalTab = 'qr'" :class="modalTab === 'qr' ? 'border-indigo-500 font-bold text-indigo-600' : 'border-transparent text-neutral-500'" class="px-2 py-1 border-b-2 whitespace-nowrap cursor-pointer">QR</button>
                             </div>
 
                             <!-- TAB: GENERAL -->
@@ -729,6 +734,46 @@ const filterByTemplate = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- TAB: QR -->
+                            <div v-if="modalTab === 'qr'" class="space-y-4 pt-2">
+                                <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Configuración del código QR</h4>
+                                <p class="text-[10px] text-neutral-500">Define la posición desde la esquina superior izquierda y el tamaño del QR en el PDF.</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-1.5 col-span-2">
+                                        <Label class="flex justify-between">
+                                            <span>Posición horizontal (X)</span>
+                                            <span class="font-mono text-xs text-indigo-500 font-bold">{{ qrSettings.x }}</span>
+                                        </Label>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            :value="parseInt(qrSettings.x) || 83"
+                                            @input="e => qrSettings.x = e.target.value + '%'"
+                                            class="w-full h-2 bg-neutral-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                        />
+                                    </div>
+                                    <div class="space-y-1.5 col-span-2">
+                                        <Label class="flex justify-between">
+                                            <span>Posición vertical (Y)</span>
+                                            <span class="font-mono text-xs text-indigo-500 font-bold">{{ qrSettings.y }}</span>
+                                        </Label>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            :value="parseInt(qrSettings.y) || 82"
+                                            @input="e => qrSettings.y = e.target.value + '%'"
+                                            class="w-full h-2 bg-neutral-200 dark:bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                        />
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <Label>Tamaño (mm)</Label>
+                                        <Input v-model.number="qrSettings.size" type="number" min="10" max="60" step="1" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Columna 2: Vista Previa Interactiva en Canvas -->
@@ -748,6 +793,15 @@ const filterByTemplate = () => {
                                     <!-- Rol -->
                                     <div class="absolute text-center" :style="{ left: roleSettings.x, top: roleSettings.y, fontSize: ((parseFloat(roleSettings.font_size) || 16) * 0.1188) + 'cqw', color: roleSettings.color, fontFamily: roleSettings.font_family, width: '100%', lineHeight: 1 }">
                                         En calidad de <strong class="font-bold">Participante</strong>
+                                    </div>
+                                    <!-- QR -->
+                                    <div
+                                        class="absolute bg-white border border-neutral-700 flex items-center justify-center shadow-sm"
+                                        :style="{ left: qrSettings.x, top: qrSettings.y, width: (((Number(qrSettings.size) || 25) / 297) * 100) + '%', aspectRatio: '1' }"
+                                    >
+                                        <div class="w-3/4 h-3/4 grid grid-cols-5 grid-rows-5 gap-px bg-neutral-900 p-1">
+                                            <span v-for="i in 25" :key="i" :class="[1, 3, 5, 7, 9, 13, 17, 19, 21, 23, 25].includes(i) ? 'bg-white' : 'bg-neutral-900'"></span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
