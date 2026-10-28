@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Search, Download, Award, ShieldCheck, CheckCircle2, AlertCircle } from '@lucide/vue';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 
 interface Certificate {
@@ -15,14 +15,59 @@ interface Certificate {
     };
 }
 
-const certificateCode = ref('');
+declare global {
+    interface Window {
+        grecaptcha?: {
+            render: (container: HTMLElement, options: Record<string, unknown>) => number;
+            getResponse: (widgetId: number) => string;
+            reset: (widgetId: number) => void;
+        };
+    }
+}
+
+const documentNumber = ref('');
+const recaptchaContainer = ref<HTMLElement | null>(null);
+const recaptchaWidgetId = ref<number | null>(null);
 const loading = ref(false);
 const searched = ref(false);
 const certificates = ref<Certificate[]>([]);
 const error = ref('');
 
+const renderRecaptcha = () => {
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
+    if (window.grecaptcha && recaptchaContainer.value && siteKey) {
+        recaptchaWidgetId.value = window.grecaptcha.render(recaptchaContainer.value, {
+            sitekey: siteKey,
+            callback: () => undefined,
+            'expired-callback': () => undefined,
+        });
+    }
+};
+
+onMounted(() => {
+    const existingScript = document.getElementById('google-recaptcha-script') as HTMLScriptElement | null;
+    if (existingScript) {
+        renderRecaptcha();
+        return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'google-recaptcha-script';
+    script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+    script.async = true;
+    script.defer = true;
+    script.onload = renderRecaptcha;
+    document.head.appendChild(script);
+});
+
 const searchCertificates = async () => {
-    if (!certificateCode.value.trim()) {
+    const captchaToken = recaptchaWidgetId.value !== null
+        ? window.grecaptcha?.getResponse(recaptchaWidgetId.value) || ''
+        : '';
+
+    if (!documentNumber.value.trim() || !captchaToken) {
+        error.value = 'Ingresa tu DNI y completa el CAPTCHA.';
 return;
 }
     
@@ -38,15 +83,27 @@ return;
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
             },
-            body: JSON.stringify({ code: certificateCode.value }),
+            body: JSON.stringify({
+                document: documentNumber.value,
+                'g-recaptcha-response': captchaToken,
+            }),
         });
 
+        const data = await response.json();
+        if (response.status === 422) {
+            error.value = data.errors?.['g-recaptcha-response']?.[0] || 'Verifica los datos ingresados.';
+            if (recaptchaWidgetId.value !== null) {
+                window.grecaptcha?.reset(recaptchaWidgetId.value);
+            }
+            return;
+        }
         if (!response.ok) {
             throw new Error('Error al buscar certificados');
         }
-
-        const data = await response.json();
         certificates.value = data.certificates;
+        if (recaptchaWidgetId.value !== null) {
+            window.grecaptcha?.reset(recaptchaWidgetId.value);
+        }
     } catch (err) {
         console.error(err);
         error.value = 'Ocurrió un error al buscar tus certificados. Por favor, intenta de nuevo.';
@@ -76,7 +133,7 @@ return '';
                 <span class="text-xs font-bold uppercase tracking-widest text-blue-400">Verificación e Impresión</span>
                 <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">Certificados Académicos</h1>
                 <p class="text-sm md:text-base text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-                    Accede a tus constancias y certificados de eventos organizados por la DPSEC de la UNA Puno. Introduce el código único de tu certificado para verificarlo y descargarlo.
+                    Accede a tus constancias y certificados de eventos organizados por la DPSEC de la UNA Puno. Ingresa tu DNI y confirma que eres una persona real.
                 </p>
 
                 <!-- Search Card -->
@@ -87,13 +144,14 @@ return '';
                                 <Award class="w-5 h-5" />
                             </span>
                             <input 
-                                v-model="certificateCode"
+                                v-model="documentNumber"
                                 type="text" 
-                                placeholder="Ingresa el código del certificado"
+                                placeholder="Ingresa tu DNI o código de estudiante"
                                 class="w-full pl-10 pr-4 py-3 bg-neutral-950 border border-neutral-800 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
                                 required
                             />
                         </div>
+                        <div ref="recaptchaContainer" class="min-h-[78px] flex items-center"></div>
                         <button 
                             type="submit" 
                             class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-500/20 active:scale-98 transition-all"

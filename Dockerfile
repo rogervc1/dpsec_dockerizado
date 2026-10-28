@@ -9,6 +9,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
+# Public reCAPTCHA key required by the Vite build. The secret remains server-only.
+ARG VITE_RECAPTCHA_SITE_KEY
+ENV VITE_RECAPTCHA_SITE_KEY=${VITE_RECAPTCHA_SITE_KEY}
+
 # 1.1 Instalar dependencias de PHP primero
 COPY composer.json composer.lock ./
 RUN composer install \

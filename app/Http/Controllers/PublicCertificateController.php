@@ -6,6 +6,8 @@ use App\Models\Certificate;
 use App\Models\CertificateFont;
 use App\Models\CertificateTemplate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -25,16 +27,29 @@ class PublicCertificateController extends Controller
     }
 
     /**
-     * Search for a certificate using its public code.
+     * Search for certificates by document after a CAPTCHA challenge.
      */
     public function search(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
-            'code' => 'required|string|max:50',
+            'document' => 'required|string|max:50',
+            'g-recaptcha-response' => 'required|string',
         ]);
 
+        $captchaResponse = Http::asForm()->timeout(5)->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => config('services.recaptcha.secret'),
+            'response' => $request->string('g-recaptcha-response')->toString(),
+            'remoteip' => $request->ip(),
+        ]);
+
+        if (! $captchaResponse->successful() || ! $captchaResponse->json('success')) {
+            throw ValidationException::withMessages([
+                'g-recaptcha-response' => 'Completa correctamente el CAPTCHA.',
+            ]);
+        }
+
         $certificates = Certificate::with('template')
-            ->where('code', trim($request->code))
+            ->where('recipient_document', trim($request->document))
             ->get();
 
         return response()->json([
