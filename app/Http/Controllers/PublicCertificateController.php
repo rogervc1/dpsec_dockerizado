@@ -11,9 +11,7 @@ use Inertia\Response as InertiaResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\Response;
 use BaconQrCode\Common\ErrorCorrectionLevel;
-use BaconQrCode\Renderer\Image\SvgImageBackEnd;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Renderer\GDLibRenderer;
 use BaconQrCode\Writer;
 
 class PublicCertificateController extends Controller
@@ -145,7 +143,7 @@ class PublicCertificateController extends Controller
             'fontStyles' => $fontStyles,
             'bgPath' => $bgPath,
             'verificationUrl' => route('certificates.verify', ['identifier' => $certificate->code]),
-            'qrSvg' => $this->verificationQr($certificate),
+            'qrDataUri' => $this->verificationQrDataUri($certificate),
         ])->render();
 
         // 4. Configure DomPDF and generate
@@ -169,7 +167,7 @@ class PublicCertificateController extends Controller
                 'fontStyles' => '',
                 'bgPath' => $bgPath,
                 'verificationUrl' => route('certificates.verify', ['identifier' => $certificate->code]),
-                'qrSvg' => $this->verificationQr($certificate),
+                'qrDataUri' => $this->verificationQrDataUri($certificate),
             ])->render();
 
             $pdf = Pdf::loadHTML($fallbackHtml);
@@ -182,16 +180,15 @@ class PublicCertificateController extends Controller
         }
     }
 
-    private function verificationQr(Certificate $certificate): string
+    private function verificationQrDataUri(Certificate $certificate): string
     {
-        $renderer = new ImageRenderer(
-            new RendererStyle(180, 8),
-            new SvgImageBackEnd(),
-        );
+        $renderer = new GDLibRenderer(240, 8, 'png', 9);
 
-        return (new Writer($renderer))->writeString(
+        $png = (new Writer($renderer))->writeString(
             route('certificates.verify', ['identifier' => $certificate->code]),
             ecLevel: ErrorCorrectionLevel::M(),
         );
+
+        return 'data:image/png;base64,' . base64_encode($png);
     }
 }

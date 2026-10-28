@@ -78,7 +78,7 @@
             color: #374151;
         }
 
-        .verification svg {
+        .verification img {
             display: block;
             width: 25mm;
             height: 25mm;
@@ -99,7 +99,7 @@
     </div>
 
     <div class="verification">
-        {!! $qrSvg !!}
+        <img src="{{ $qrDataUri }}" alt="Código QR de verificación" />
         Verificación oficial
     </div>
 
