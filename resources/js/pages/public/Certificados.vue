@@ -28,17 +28,16 @@ declare global {
 const documentNumber = ref('');
 const recaptchaContainer = ref<HTMLElement | null>(null);
 const recaptchaWidgetId = ref<number | null>(null);
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
 const loading = ref(false);
 const searched = ref(false);
 const certificates = ref<Certificate[]>([]);
 const error = ref('');
 
 const renderRecaptcha = () => {
-    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-
-    if (window.grecaptcha && recaptchaContainer.value && siteKey) {
+    if (window.grecaptcha && recaptchaContainer.value && recaptchaSiteKey) {
         recaptchaWidgetId.value = window.grecaptcha.render(recaptchaContainer.value, {
-            sitekey: siteKey,
+            sitekey: recaptchaSiteKey,
             callback: () => undefined,
             'expired-callback': () => undefined,
         });
@@ -138,8 +137,8 @@ return '';
 
                 <!-- Search Card -->
                 <div class="max-w-xl mx-auto mt-8 bg-neutral-900/60 backdrop-blur-xl border border-neutral-800 rounded-2xl p-6 shadow-2xl">
-                    <form @submit.prevent="searchCertificates" class="flex flex-col sm:flex-row gap-3">
-                        <div class="relative flex-grow">
+                    <form @submit.prevent="searchCertificates" class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 items-start">
+                        <div class="relative sm:col-span-2">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-500">
                                 <Award class="w-5 h-5" />
                             </span>
@@ -151,7 +150,10 @@ return '';
                                 required
                             />
                         </div>
-                        <div ref="recaptchaContainer" class="min-h-[78px] flex items-center"></div>
+                        <div v-if="recaptchaSiteKey" ref="recaptchaContainer" class="w-[304px] min-h-[78px] flex items-center"></div>
+                        <p v-else class="text-[10px] text-amber-400 sm:col-span-2">
+                            CAPTCHA no configurado. Agrega VITE_RECAPTCHA_SITE_KEY y vuelve a compilar.
+                        </p>
                         <button 
                             type="submit" 
                             class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-500/20 active:scale-98 transition-all"
