@@ -39,7 +39,7 @@ const renderRecaptcha = () => {
         return;
     }
 
-    if (window.grecaptcha && recaptchaContainer.value && recaptchaSiteKey) {
+    if (window.grecaptcha?.render && recaptchaContainer.value && recaptchaSiteKey) {
         recaptchaWidgetId.value = window.grecaptcha.render(recaptchaContainer.value, {
             sitekey: recaptchaSiteKey,
             callback: () => undefined,
@@ -65,7 +65,8 @@ onMounted(() => {
 
     const script = document.createElement('script');
     script.id = 'google-recaptcha-script';
-    script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+    // recaptcha.net is Google's official alternative when google.com is blocked.
+    script.src = 'https://www.recaptcha.net/recaptcha/api.js?render=explicit';
     script.async = true;
     script.defer = true;
     script.onload = () => waitForRecaptcha();
