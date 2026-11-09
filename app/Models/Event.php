@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** @property-read \Carbon\Carbon $event_date */
 class Event extends Model
@@ -13,6 +14,7 @@ class Event extends Model
         'title', 'type', 'category', 'event_date', 'time', 'location', 'organizer',
         'description', 'image_path', 'event_images', 'cover_image_path', 'fb_link', 'registration_link', 'is_proyeccion_social', 'sort_order',
         'status', 'status_label', 'status_color',
+        'has_exclusive_page', 'exclusive_page_content', 'exclusive_page_settings',
     ];
 
     protected static function booted(): void
@@ -33,7 +35,20 @@ class Event extends Model
             'event_date' => 'date',
             'event_images' => 'array',
             'is_proyeccion_social' => 'boolean',
+            'has_exclusive_page' => 'boolean',
+            'exclusive_page_content' => 'array',
+            'exclusive_page_settings' => 'array',
         ];
+    }
+
+    public function exclusiveDocuments(): HasMany
+    {
+        return $this->hasMany(EventExclusiveDocument::class);
+    }
+
+    public function registrationSubmissions(): HasMany
+    {
+        return $this->hasMany(EventRegistrationSubmission::class);
     }
 
     /**

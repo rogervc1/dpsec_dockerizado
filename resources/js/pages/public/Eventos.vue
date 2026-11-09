@@ -250,7 +250,7 @@ const filteredEvents = computed(() => {
                                 <ChevronRight class="size-3.5" />
                             </span>
                             <Link
-                                v-if="ev.id"
+                                v-if="ev.id && ev.has_exclusive_page"
                                 :href="`/eventos/${ev.id}`"
                                 @click.stop
                                 class="shrink-0"
@@ -397,7 +397,7 @@ const filteredEvents = computed(() => {
                             <div class="border-t border-neutral-100 dark:border-neutral-800/80 pt-4 mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                                     <Link
-                                        v-if="selectedEvent.id"
+                                        v-if="selectedEvent.id && selectedEvent.has_exclusive_page"
                                         :href="`/eventos/${selectedEvent.id}`"
                                         class="w-full sm:w-auto"
                                         @click.stop

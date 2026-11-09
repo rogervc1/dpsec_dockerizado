@@ -25,7 +25,7 @@ class AdminDashboardController extends Controller
             ->latest();
 
         return Inertia::render('Dashboard', [
-            'events'    => Event::orderBy('sort_order')->orderBy('event_date', 'desc')->get(),
+            'events'    => Event::with(['exclusiveDocuments' => fn ($query) => $query->latest()])->orderBy('sort_order')->orderBy('event_date', 'desc')->get(),
             'documents' => Document::orderBy('sort_order')->orderBy('published_date', 'desc')->get(),
             'stats' => [
                 'totalEvents'    => Event::count(),

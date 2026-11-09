@@ -17,14 +17,27 @@ import {
     CheckCircle,
     Clock,
     AlertCircle,
-    Upload
+    Upload,
+    Eye,
+    EyeOff,
+    Download,
+    FileSpreadsheet,
+    AlignCenter,
+    AlignLeft,
+    AlignRight,
+    ArrowDown,
+    ArrowLeft,
+    ArrowRight,
+    ArrowUp,
 } from '@lucide/vue';
 import { ref, computed } from 'vue';
+import EventExclusiveHero from '@/components/EventExclusiveHero.vue';
 import CertificateTab from '@/components/CertificateTab.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
+import { getExclusiveEventView } from '@/lib/exclusiveEventView';
 
 // ─── Props from AdminDashboardController ────────────────────────────────────
 interface EventItem {
@@ -45,6 +58,10 @@ interface EventItem {
     event_images?: string[];
     fb_link: string;
     registration_link?: string | null;
+    has_exclusive_page?: boolean;
+    exclusive_documents?: any[];
+    exclusive_page_content?: Record<string, any> | null;
+    exclusive_page_settings?: Record<string, any> | null;
     is_proyeccion_social: boolean;
     sort_order: number;
 }
@@ -72,7 +89,7 @@ const props = withDefaults(defineProps<{
     events?: EventItem[];
     documents?: DocumentItem[];
     stats?: StatsItem;
-    flash?: { success?: string; error?: string };
+    flash?: { success?: string; error?: string; exclusive_event_id?: number };
     templates?: any[];
     fonts?: any[];
     certificates?: any;
@@ -154,6 +171,7 @@ const eventForm = useForm({
     is_proyeccion_social: true as boolean,
     sort_order: 0,
 });
+const addEventComplete = computed(() => Boolean(eventForm.title.trim() && eventForm.type && eventForm.category && eventForm.event_date && eventForm.location.trim() && eventForm.organizer.trim() && eventForm.description.trim()));
 
 // Interactive Drag & Crop States
 const cropSource = ref('');
@@ -434,15 +452,18 @@ const openAddEvent = () => {
     isAddEventOpen.value = true;
 };
 
-const submitAddEvent = () => {
+const submitAddEvent = (openExclusivePage = false) => {
     eventForm.transform((data) => ({
         ...data,
         registration_link: data.has_registration ? data.registration_link : null,
+        open_exclusive_page: openExclusivePage,
     })).post('/admin/eventos', {
         preserveScroll: true,
-        onSuccess: () => {
+        onSuccess: (page) => {
             isAddEventOpen.value = false;
             eventForm.reset();
+            const eventId = (page.props.flash as { exclusive_event_id?: number })?.exclusive_event_id;
+            if (openExclusivePage && eventId) openExclusivePageEditor(props.events.find((event) => event.id === eventId));
         },
     });
 };
@@ -469,6 +490,7 @@ const editEventForm = useForm({
     is_proyeccion_social: false as boolean,
     sort_order: 0,
 });
+const editEventComplete = computed(() => Boolean(editEventForm.title.trim() && editEventForm.type && editEventForm.category && editEventForm.event_date && editEventForm.location.trim() && editEventForm.organizer.trim() && editEventForm.description.trim()));
 
 const openEditEvent = (ev: EventItem) => {
     activeMode.value = 'edit';
@@ -507,17 +529,204 @@ const openEditEvent = (ev: EventItem) => {
     }
 };
 
-const submitEditEvent = () => {
+const submitEditEvent = (openExclusivePage = false) => {
     editEventForm.transform((data) => ({
         ...data,
         registration_link: data.has_registration ? data.registration_link : null,
+        open_exclusive_page: openExclusivePage,
         _method: 'PUT'
     })).post(`/admin/eventos/${editingEventId.value}`, {
         preserveScroll: true,
-        onSuccess: () => {
+        onSuccess: (page) => {
             isEditEventOpen.value = false;
+            const eventId = (page.props.flash as { exclusive_event_id?: number })?.exclusive_event_id;
+            if (openExclusivePage && eventId) openExclusivePageEditor(props.events.find((event) => event.id === eventId));
         },
     });
+};
+
+const isExclusivePageOpen = ref(false);
+const exclusiveEventId = ref<number | null>(null);
+const exclusiveEventTitle = ref('');
+type ExclusiveLocation = { id: string; name: string; description: string; image: string; image_file: File | null; order?: number };
+type ScheduleActivity = { id: string; subject: string; description: string; date: string; time: string };
+type RegistrationFormConfig = { id: string; enabled: boolean; title: string; description: string; opens_at: string; closes_at: string; fields: any[] };
+type ExclusiveTab = 'principal' | 'documentos' | 'cronograma' | 'participantes' | 'ubicaciones' | 'resultados';
+const exclusiveEditorTabs: { key: ExclusiveTab; label: string }[] = [
+    { key: 'principal', label: 'Información principal' }, { key: 'documentos', label: 'Documentos' },
+    { key: 'cronograma', label: 'Cronograma' }, { key: 'participantes', label: 'Registro' },
+    { key: 'ubicaciones', label: 'Ubicaciones' }, { key: 'resultados', label: 'Resultados' },
+];
+const exclusiveEditorTab = ref<ExclusiveTab>('principal');
+const exclusivePreviewMode = ref<'desktop' | 'mobile'>('desktop');
+const exclusiveThemes = [
+    { value: 'emerald', label: 'Esmeralda', accent: '#34d399', soft: '#a7f3d0' },
+    { value: 'forest', label: 'Bosque', accent: '#4ade80', soft: '#bbf7d0' },
+    { value: 'teal', label: 'Turquesa', accent: '#2dd4bf', soft: '#99f6e4' },
+    { value: 'lime', label: 'Lima', accent: '#a3e635', soft: '#d9f99d' },
+    { value: 'mint', label: 'Menta', accent: '#6ee7b7', soft: '#d1fae5' },
+];
+const exclusiveDocumentForm = useForm({ title: '', description: '', is_visible: true, file: null as File | null });
+const exclusiveDocuments = ref<any[]>([]);
+const editingExclusiveDocumentId = ref<number | null>(null);
+const scheduleActivityDraft = ref({ subject: '', description: '', date: '', time: '' });
+const registrationFormsDraft = ref<RegistrationFormConfig[]>([]);
+const registrationSelectedId = ref('');
+const registrationPanel = ref<'editor' | 'preview' | 'stats'>('editor');
+const registrationStats = ref<any>(null);
+const registrationStatsLoading = ref(false);
+const registrationStatsError = ref('');
+const selectedRegistrationForm = computed(() => registrationFormsDraft.value.find((form) => form.id === registrationSelectedId.value) || null);
+const exclusivePageForm = useForm({
+    enabled: true,
+    settings: {
+        title: '', subtitle: '', event_date: '', time: '', location: '', about: '', theme: 'emerald',
+        title_position: 'left', title_size: 76, title_offset_x: 0, title_offset_y: 0,
+        desktop_cover: '', desktop_cover_zoom: 1, desktop_cover_x: 50, desktop_cover_y: 50,
+        mobile_cover: '', mobile_cover_zoom: 1, mobile_cover_x: 50, mobile_cover_y: 50,
+        desktop_cover_file: null as File | null,
+    },
+    sections: {
+        documentos: { link: '' },
+        cronograma: { link: '', activities: [] as ScheduleActivity[] },
+        participantes: { link: '', form: null as RegistrationFormConfig | null, forms: [] as RegistrationFormConfig[] },
+        ubicaciones: { link: '', croquis: '', croquis_file: null as File | null, locations: [] as ExclusiveLocation[] },
+        resultados: { link: '' },
+    },
+});
+const openExclusivePageEditor = (event?: EventItem) => {
+    if (!event) return;
+    exclusiveEventId.value = event.id;
+    exclusiveEventTitle.value = event.title;
+    exclusiveDocuments.value = event.exclusive_documents || [];
+    exclusiveEditorTab.value = 'principal';
+    const settings = event.exclusive_page_settings || {};
+    exclusivePageForm.enabled = true;
+    exclusivePageForm.settings = {
+        title: settings.title || event.title, subtitle: settings.subtitle || '',
+        event_date: settings.event_date || (event.event_date ? event.event_date.slice(0, 10) : ''),
+        time: settings.time ?? event.time ?? '', location: settings.location || event.location,
+        about: settings.about || event.description, theme: settings.theme || 'emerald',
+        title_position: settings.title_position || 'left', title_size: settings.title_size || 76,
+        title_offset_x: settings.title_offset_x || 0, title_offset_y: settings.title_offset_y || 0,
+        desktop_cover: settings.desktop_cover || event.cover_image_path || event.image_path || '',
+        desktop_cover_zoom: Number(settings.desktop_cover_zoom || 1), desktop_cover_x: Number(settings.desktop_cover_x ?? 50),
+        desktop_cover_y: Number(settings.desktop_cover_y ?? 50), mobile_cover: settings.desktop_cover || event.cover_image_path || event.image_path || '',
+        mobile_cover_zoom: Number(settings.mobile_cover_zoom || 1), mobile_cover_x: Number(settings.mobile_cover_x ?? 50),
+        mobile_cover_y: Number(settings.mobile_cover_y ?? 50), desktop_cover_file: null,
+    };
+    const content = event.exclusive_page_content || {};
+    for (const key of ['documentos', 'cronograma', 'participantes', 'ubicaciones', 'resultados'] as const) {
+        (exclusivePageForm.sections as any)[key].link = content[key]?.link || '';
+    }
+    exclusivePageForm.sections.cronograma.activities = content.cronograma?.activities || [];
+    exclusivePageForm.sections.ubicaciones.croquis = content.ubicaciones?.croquis || '';
+    exclusivePageForm.sections.ubicaciones.croquis_file = null;
+    exclusivePageForm.sections.ubicaciones.locations = (content.ubicaciones?.locations || []).map((item: any) => ({
+        ...item, image_file: null,
+    }));
+    registrationFormsDraft.value = (content.participantes?.forms || (content.participantes?.form ? [{ id: 'default', ...content.participantes.form }] : [])).map((form: any) => ({ ...form, fields: (form.fields || []).map((field: any) => ({ ...field, options_text: (field.options || []).join('\n') })) }));
+    exclusivePageForm.sections.participantes.forms = registrationFormsDraft.value;
+    exclusivePageForm.sections.participantes.form = registrationFormsDraft.value[0] || null;
+    registrationSelectedId.value = registrationFormsDraft.value[0]?.id || '';
+    registrationPanel.value = 'editor';
+    registrationStats.value = null;
+    registrationStatsError.value = '';
+    exclusivePageForm.clearErrors();
+    exclusiveDocumentForm.reset();
+    isExclusivePageOpen.value = true;
+};
+const saveExclusivePage = () => {
+    if (!exclusiveEventId.value) return;
+    exclusivePageForm.sections.participantes.forms = registrationFormsDraft.value;
+    exclusivePageForm.transform((data) => ({ ...data, sections: { ...data.sections, participantes: { ...data.sections.participantes, forms: registrationFormsDraft.value.map((form: any) => ({ ...form, fields: form.fields.map(({ options_text, ...field }: any) => ({ ...field, options: ['select', 'radio', 'checkbox'].includes(field.type) ? String(options_text || '').split('\n').map((option: string) => option.trim()).filter(Boolean) : [] })) })) } }, _method: 'PUT' })).post(`/admin/eventos/${exclusiveEventId.value}/pagina-exclusiva`, {
+        preserveScroll: true,
+        onSuccess: () => { isExclusivePageOpen.value = false; },
+    });
+};
+const addLocationDraft = () => exclusivePageForm.sections.ubicaciones.locations.push({ id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name: '', description: '', image: '', image_file: null });
+const moveLocationDraft = (index: number, direction: -1 | 1) => {
+    const locations = exclusivePageForm.sections.ubicaciones.locations;
+    const target = index + direction;
+    if (target < 0 || target >= locations.length) return;
+    [locations[index], locations[target]] = [locations[target], locations[index]];
+};
+const startAddingLocation = () => addLocationDraft();
+const removeLocation = (index: number) => {
+    exclusivePageForm.sections.ubicaciones.locations.splice(index, 1);
+};
+const addRegistrationField = (form: RegistrationFormConfig) => {
+    form.fields.push({ id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, label: 'Nueva pregunta', type: 'text', required: false, options: [], options_text: '' });
+};
+const addRegistrationForm = () => {
+    const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    registrationFormsDraft.value.push({ id, enabled: true, title: 'Inscripción al evento', description: '', opens_at: '', closes_at: '', fields: [
+        { id: 'name', label: 'Nombre completo', type: 'text', required: true },
+    ] });
+    registrationSelectedId.value = id;
+    registrationPanel.value = 'editor';
+};
+const loadRegistrationStats = async () => {
+    if (!exclusiveEventId.value || !registrationSelectedId.value) return;
+    registrationStatsLoading.value = true; registrationStatsError.value = '';
+    try {
+        const response = await fetch(`/admin/eventos/${exclusiveEventId.value}/pagina-exclusiva/registro/estadisticas?form_id=${encodeURIComponent(registrationSelectedId.value)}`, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) throw new Error('No se pudieron cargar las estadísticas.');
+        registrationStats.value = await response.json(); registrationPanel.value = 'stats';
+    } catch (error) { registrationStatsError.value = error instanceof Error ? error.message : 'Ocurrió un error al cargar las estadísticas.'; }
+    finally { registrationStatsLoading.value = false; }
+};
+const formatRegistrationAnswer = (answer: string | string[] | undefined) => Array.isArray(answer) ? answer.join(', ') : answer || '—';
+const addActivity = () => {
+    const draft = scheduleActivityDraft.value;
+    if (!draft.subject.trim() || !draft.date) return;
+    exclusivePageForm.sections.cronograma.activities.push({ ...draft, id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}` });
+    scheduleActivityDraft.value = { subject: '', description: '', date: '', time: '' };
+};
+const removeActivity = (id: string) => { exclusivePageForm.sections.cronograma.activities = exclusivePageForm.sections.cronograma.activities.filter((item) => item.id !== id); };
+const getExclusiveTheme = (theme: string) => exclusiveThemes.find((item) => item.value === theme) || exclusiveThemes[0];
+const moveExclusiveTitle = (direction: 'left' | 'right' | 'up' | 'down') => {
+    const settings = exclusivePageForm.settings;
+    if (direction === 'left') settings.title_offset_x = Math.max(-120, settings.title_offset_x - 8);
+    if (direction === 'right') settings.title_offset_x = Math.min(120, settings.title_offset_x + 8);
+    if (direction === 'up') settings.title_offset_y = Math.max(-120, settings.title_offset_y - 8);
+    if (direction === 'down') settings.title_offset_y = Math.min(120, settings.title_offset_y + 8);
+};
+const moveExclusiveCover = (device: 'desktop' | 'mobile', direction: 'left' | 'right' | 'up' | 'down') => {
+    const xKey = device === 'desktop' ? 'desktop_cover_x' : 'mobile_cover_x';
+    const yKey = device === 'desktop' ? 'desktop_cover_y' : 'mobile_cover_y';
+    if (direction === 'left') exclusivePageForm.settings[xKey] = Math.max(0, exclusivePageForm.settings[xKey] - 5);
+    if (direction === 'right') exclusivePageForm.settings[xKey] = Math.min(100, exclusivePageForm.settings[xKey] + 5);
+    if (direction === 'up') exclusivePageForm.settings[yKey] = Math.max(0, exclusivePageForm.settings[yKey] - 5);
+    if (direction === 'down') exclusivePageForm.settings[yKey] = Math.min(100, exclusivePageForm.settings[yKey] + 5);
+};
+const exclusivePreviewView = computed(() => {
+    const form = exclusivePageForm.settings;
+    const cover = form.desktop_cover_file ? getFilePreview(form.desktop_cover_file) : form.desktop_cover;
+    return getExclusiveEventView({ ...(props.events.find((item) => item.id === exclusiveEventId.value) || {}), exclusive_page_settings: { ...form, desktop_cover: cover, mobile_cover: cover } });
+});
+const editExclusiveDocument = (document: any) => {
+    editingExclusiveDocumentId.value = document.id;
+    exclusiveDocumentForm.title = document.title;
+    exclusiveDocumentForm.description = document.description || '';
+    exclusiveDocumentForm.is_visible = document.is_visible;
+    exclusiveDocumentForm.file = null;
+};
+const saveExclusiveDocument = () => {
+    if (!exclusiveEventId.value) return;
+    const id = editingExclusiveDocumentId.value;
+    exclusiveDocumentForm.transform((data) => id ? { ...data, _method: 'PUT' } : data).post(id ? `/admin/eventos/${exclusiveEventId.value}/pagina-exclusiva/documentos/${id}` : `/admin/eventos/${exclusiveEventId.value}/pagina-exclusiva/documentos`, {
+        preserveScroll: true,
+        onSuccess: (page) => {
+            const events = (page.props.events || []) as EventItem[];
+            exclusiveDocuments.value = events.find((item) => item.id === exclusiveEventId.value)?.exclusive_documents || exclusiveDocuments.value;
+            exclusiveDocumentForm.reset(); editingExclusiveDocumentId.value = null;
+        },
+    });
+};
+const deleteExclusiveDocument = (document: any) => {
+    if (!exclusiveEventId.value || !confirm(`¿Eliminar “${document.title}”?`)) return;
+    router.delete(`/admin/eventos/${exclusiveEventId.value}/pagina-exclusiva/documentos/${document.id}`, { preserveScroll: true });
 };
 
 const deleteEvent = (id: number) => {
@@ -806,6 +1015,7 @@ const deleteDoc = (id: number) => {
                                         <div>
                                             <span class="font-extrabold text-neutral-900 dark:text-white line-clamp-1 max-w-[280px] block">{{ item.title }}</span>
                                             <span class="text-[10px] text-neutral-400">{{ item.location }}</span>
+                                            <span class="block text-[9px] font-bold" :class="item.has_exclusive_page ? 'text-emerald-600' : 'text-neutral-400'">{{ item.has_exclusive_page ? 'Página exclusiva activa' : 'Sin página exclusiva' }}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -839,6 +1049,13 @@ const deleteDoc = (id: number) => {
                                 </td>
                                 <td class="p-4 text-right">
                                     <div class="flex items-center justify-end gap-1">
+                                        <button
+                                            @click="openExclusivePageEditor(item)"
+                                            :title="item.has_exclusive_page ? 'Configurar página exclusiva' : 'Crear página exclusiva'"
+                                            class="p-2 rounded-lg hover:bg-amber-500/10 text-amber-600 cursor-pointer"
+                                        >
+                                            <FileText class="size-4" />
+                                        </button>
                                         <a v-if="item.fb_link" :href="item.fb_link" target="_blank" class="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500">
                                             <ExternalLink class="size-4" />
                                         </a>
@@ -1143,7 +1360,10 @@ const deleteDoc = (id: number) => {
 
                     <div class="flex justify-end gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
                         <Button type="button" @click="isAddEventOpen = false" variant="outline" class="rounded-xl text-xs h-10 cursor-pointer">Cancelar</Button>
-                        <Button type="submit" :disabled="eventForm.processing" class="rounded-xl text-xs h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold cursor-pointer">
+                        <Button type="button" :disabled="!addEventComplete || eventForm.processing" @click="submitAddEvent(true)" variant="outline" class="rounded-xl text-xs h-10 cursor-pointer">
+                            Crear página exclusiva
+                        </Button>
+                        <Button type="submit" :disabled="!addEventComplete || eventForm.processing" class="rounded-xl text-xs h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold cursor-pointer">
                             {{ eventForm.processing ? 'Guardando...' : 'Registrar Evento' }}
                         </Button>
                     </div>
@@ -1321,10 +1541,58 @@ const deleteDoc = (id: number) => {
                     </div>
                     <div class="flex justify-end gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
                         <Button type="button" @click="isEditEventOpen = false" variant="outline" class="rounded-xl text-xs h-10 cursor-pointer">Cancelar</Button>
-                        <Button type="submit" :disabled="editEventForm.processing" class="rounded-xl text-xs h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold cursor-pointer">
+                        <Button type="button" :disabled="!editEventComplete || editEventForm.processing" @click="submitEditEvent(true)" variant="outline" class="rounded-xl text-xs h-10 cursor-pointer">
+                            {{ editingEventId && props.events.find((event) => event.id === editingEventId)?.has_exclusive_page ? 'Configurar página exclusiva' : 'Crear página exclusiva' }}
+                        </Button>
+                        <Button type="submit" :disabled="!editEventComplete || editEventForm.processing" class="rounded-xl text-xs h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold cursor-pointer">
                             {{ editEventForm.processing ? 'Guardando...' : 'Guardar Cambios' }}
                         </Button>
                     </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: CONFIGURAR PÁGINA EXCLUSIVA -->
+        <div v-if="isExclusivePageOpen" class="fixed inset-0 z-[60] flex items-center justify-center overflow-x-hidden bg-black/60 backdrop-blur-xs p-0 sm:p-5">
+            <div class="flex h-[100dvh] max-h-[100dvh] w-full max-w-[1500px] min-w-0 flex-col overflow-hidden rounded-none border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 sm:h-[95vh] sm:max-h-[95vh] sm:rounded-[24px]">
+                <div class="flex shrink-0 items-start justify-between gap-4 border-b border-neutral-100 px-5 py-4 dark:border-neutral-800 sm:px-7">
+                    <div><h3 class="text-lg font-black text-neutral-900 dark:text-white">Configurar página exclusiva</h3><p class="mt-1 text-xs text-neutral-500">{{ exclusiveEventTitle }} · Sube el croquis y configura sus puntos de ubicación.</p></div>
+                    <button type="button" @click="isExclusivePageOpen = false" class="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"><X class="size-5" /></button>
+                </div>
+                <form @submit.prevent="saveExclusivePage" class="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:overflow-hidden lg:grid-cols-[minmax(360px,0.85fr)_minmax(480px,1.15fr)] lg:grid-rows-[minmax(0,1fr)_auto]">
+                    <div class="min-w-0 space-y-5 p-4 sm:p-7 lg:col-start-1 lg:row-start-1 lg:min-h-0 lg:overflow-y-auto">
+                        <label class="flex items-center gap-2 rounded-xl bg-neutral-50 p-3 text-xs font-bold dark:bg-neutral-950"><input v-model="exclusivePageForm.enabled" type="checkbox" class="size-4 rounded" />Página exclusiva activa y visible al público</label>
+                        <nav class="flex min-w-0 gap-1 overflow-x-auto rounded-xl border border-neutral-200 bg-neutral-50 p-1 dark:border-neutral-800 dark:bg-neutral-950" aria-label="Secciones de configuración"><button v-for="tab in exclusiveEditorTabs" :key="tab.key" type="button" @click="exclusiveEditorTab = tab.key" class="shrink-0 rounded-lg px-3 py-2 text-xs font-bold" :class="exclusiveEditorTab === tab.key ? 'bg-white text-emerald-700 shadow-sm dark:bg-neutral-800 dark:text-emerald-300' : 'text-neutral-500'">{{ tab.label }}</button></nav>
+                        <section v-if="exclusiveEditorTab === 'principal'" class="space-y-4 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800"><div><h4 class="text-sm font-extrabold">Información principal</h4><p class="text-[11px] text-neutral-500">Personaliza la información y la portada del evento.</p></div><div class="space-y-1.5"><Label class="text-xs">Nombre del evento</Label><Input v-model="exclusivePageForm.settings.title" class="h-9 rounded-lg text-xs" /></div><div class="space-y-1.5"><Label class="text-xs">Subtítulo</Label><Input v-model="exclusivePageForm.settings.subtitle" class="h-9 rounded-lg text-xs" /></div><div class="grid grid-cols-2 gap-3"><div><Label class="text-xs">Fecha</Label><Input v-model="exclusivePageForm.settings.event_date" type="date" class="h-9 rounded-lg text-xs" /></div><div><Label class="text-xs">Hora</Label><Input v-model="exclusivePageForm.settings.time" class="h-9 rounded-lg text-xs" /></div></div><div><Label class="text-xs">Ubicación del evento</Label><Input v-model="exclusivePageForm.settings.location" class="h-9 rounded-lg text-xs" /></div><div><Label class="text-xs">Sobre el evento</Label><textarea v-model="exclusivePageForm.settings.about" rows="4" class="w-full rounded-lg border border-neutral-300 bg-white p-3 text-xs dark:border-neutral-700 dark:bg-neutral-950"></textarea></div><div><Label class="text-xs">Imagen de portada</Label><input type="file" accept="image/jpeg,image/png,image/webp" @change="(event) => exclusivePageForm.settings.desktop_cover_file = (event.target as HTMLInputElement).files?.[0] || null" class="mt-1 block w-full text-xs" /></div><div><Label class="text-xs">Color</Label><div class="mt-2 flex gap-2"><button v-for="theme in exclusiveThemes" :key="theme.value" type="button" @click="exclusivePageForm.settings.theme = theme.value" class="size-8 rounded-full" :style="{ backgroundColor: theme.accent }"></button></div></div></section>
+                        <section v-else-if="exclusiveEditorTab === 'documentos'" class="space-y-4 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800"><div><h4 class="text-sm font-extrabold">Documentos del evento</h4><p class="text-[11px] text-neutral-500">Agrega recursos descargables para los participantes.</p></div><Input v-model="exclusiveDocumentForm.title" placeholder="Nombre del documento" class="h-9 rounded-lg text-xs" /><Input v-model="exclusiveDocumentForm.description" placeholder="Descripción (opcional)" class="h-9 rounded-lg text-xs" /><input type="file" @change="(event) => exclusiveDocumentForm.file = (event.target as HTMLInputElement).files?.[0] || null" class="block w-full text-xs" /><label class="flex items-center gap-2 text-xs"><input v-model="exclusiveDocumentForm.is_visible" type="checkbox" />Visible al público</label><div class="flex gap-2"><Button type="button" :disabled="exclusiveDocumentForm.processing || (!exclusiveDocumentForm.file && !editingExclusiveDocumentId)" @click="saveExclusiveDocument" class="rounded-lg bg-emerald-700 text-xs text-white">{{ editingExclusiveDocumentId ? 'Guardar cambios' : 'Agregar documento' }}</Button><Button v-if="editingExclusiveDocumentId" type="button" @click="exclusiveDocumentForm.reset(); editingExclusiveDocumentId = null" variant="outline" class="rounded-lg text-xs">Cancelar</Button></div><article v-for="document in exclusiveDocuments" :key="document.id" class="flex items-center justify-between gap-2 rounded-lg border p-3 text-xs"><span class="truncate font-bold">{{ document.title }} · {{ document.original_name }}</span><div class="flex gap-2"><button type="button" @click="editExclusiveDocument(document)" class="text-emerald-700">Editar</button><button type="button" @click="deleteExclusiveDocument(document)" class="text-red-600">Eliminar</button></div></article><p v-if="exclusivePageForm.sections.documentos.link" class="text-[10px] text-neutral-500">Enlace guardado: {{ exclusivePageForm.sections.documentos.link }}</p><Input v-model="exclusivePageForm.sections.documentos.link" type="url" placeholder="Enlace relacionado (opcional)" class="h-9 rounded-lg text-xs" /></section>
+                        <section v-else-if="exclusiveEditorTab === 'cronograma'" class="space-y-4 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800"><div><h4 class="text-sm font-extrabold">Cronograma del evento</h4><p class="text-[11px] text-neutral-500">Programa, fechas y horarios.</p></div><Input v-model="scheduleActivityDraft.subject" placeholder="Actividad" class="h-9 rounded-lg text-xs" /><textarea v-model="scheduleActivityDraft.description" placeholder="Descripción" rows="2" class="w-full rounded-lg border p-2 text-xs dark:bg-neutral-950"></textarea><div class="grid grid-cols-2 gap-2"><Input v-model="scheduleActivityDraft.date" type="date" class="h-9 rounded-lg text-xs" /><Input v-model="scheduleActivityDraft.time" type="time" class="h-9 rounded-lg text-xs" /></div><Button type="button" @click="addActivity" class="rounded-lg bg-emerald-700 text-xs text-white">Agregar actividad</Button><article v-for="activity in exclusivePageForm.sections.cronograma.activities" :key="activity.id" class="flex justify-between gap-2 rounded-lg border p-3 text-xs"><span>{{ activity.subject }} · {{ activity.date }} {{ activity.time }}</span><button type="button" @click="removeActivity(activity.id)" class="text-red-600">Quitar</button></article><Input v-model="exclusivePageForm.sections.cronograma.link" type="url" placeholder="Enlace opcional" class="h-9 rounded-lg text-xs" /></section>
+                        <section v-else-if="exclusiveEditorTab === 'participantes'" class="space-y-4 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800"><div><h4 class="text-sm font-extrabold">Registro de participantes</h4><p class="text-[11px] text-neutral-500">Conserva la configuración de inscripción de este evento.</p></div><div v-for="(form, index) in registrationFormsDraft" :key="form.id" @click="registrationSelectedId = form.id" class="space-y-2 rounded-lg border p-3 text-xs" :class="registrationSelectedId === form.id ? 'border-emerald-500 bg-emerald-50/40' : ''"><div class="flex items-center gap-2"><Input v-model="form.title" placeholder="Título del formulario" class="h-9 rounded-lg text-xs" /><button type="button" @click="form.enabled = !form.enabled" class="shrink-0 rounded border px-2 py-1">{{ form.enabled ? 'Publicado' : 'Borrador' }}</button><button type="button" @click="registrationFormsDraft.splice(index, 1); if (registrationSelectedId === form.id) registrationSelectedId = registrationFormsDraft[0]?.id || ''" class="text-red-600">Quitar</button></div><textarea v-model="form.description" placeholder="Descripción" rows="2" class="w-full rounded-lg border p-2 text-xs dark:bg-neutral-950"></textarea><div class="grid grid-cols-2 gap-2"><label class="text-[10px]">Abre<Input v-model="form.opens_at" type="datetime-local" class="h-8 text-xs" /></label><label class="text-[10px]">Cierra<Input v-model="form.closes_at" type="datetime-local" class="h-8 text-xs" /></label></div><div v-for="field in form.fields" :key="field.id" class="space-y-1 rounded border p-2"><div class="flex gap-2"><Input v-model="field.label" placeholder="Pregunta" class="h-8 rounded text-xs" /><select v-model="field.type" class="rounded border px-2 text-xs"><option value="text">Texto</option><option value="email">Correo</option><option value="textarea">Texto largo</option><option value="select">Lista</option><option value="radio">Opción única</option><option value="checkbox">Casillas</option></select></div><textarea v-if="['select','radio','checkbox'].includes(field.type)" v-model="field.options_text" rows="2" placeholder="Una opción por línea" class="w-full rounded border p-2 text-xs"></textarea></div><button type="button" @click="addRegistrationField(form)" class="text-emerald-700">+ Agregar pregunta</button></div><Button type="button" @click="addRegistrationForm" class="rounded-lg bg-emerald-700 text-xs text-white">Crear formulario</Button><Input v-model="exclusivePageForm.sections.participantes.link" type="url" placeholder="Enlace de inscripción (opcional)" class="h-9 rounded-lg text-xs" /></section>
+                        <section v-else-if="exclusiveEditorTab === 'ubicaciones'" class="space-y-4 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800">
+                            <div><h4 class="text-sm font-extrabold">Croquis y locaciones</h4><p class="text-[11px] text-neutral-500">Sube el croquis general y agrega las locaciones en el orden en que se visitarán.</p></div>
+                            <div class="space-y-2 rounded-xl bg-neutral-50 p-3 dark:bg-neutral-950"><Label class="text-xs">Imagen del croquis</Label><input type="file" accept="image/jpeg,image/png,image/webp" @change="(event) => exclusivePageForm.sections.ubicaciones.croquis_file = (event.target as HTMLInputElement).files?.[0] || null" class="block w-full text-xs text-neutral-500" /><img v-if="exclusivePageForm.sections.ubicaciones.croquis" :src="exclusivePageForm.sections.ubicaciones.croquis" alt="Croquis actual" class="max-h-32 rounded-lg object-contain" /></div>
+                            <div class="flex items-center justify-between"><h5 class="text-xs font-extrabold">Locaciones ({{ exclusivePageForm.sections.ubicaciones.locations.length }})</h5><Button type="button" @click="addLocationDraft" class="rounded-lg bg-emerald-700 text-xs font-bold text-white"><Plus class="mr-1 size-3.5" />Agregar</Button></div>
+                            <article v-for="(location, index) in exclusivePageForm.sections.ubicaciones.locations" :key="location.id" class="space-y-2 rounded-xl border border-neutral-200 p-3 dark:border-neutral-800"><div class="flex items-center justify-between"><span class="text-xs font-bold">{{ index + 1 }}. Locación</span><div class="flex gap-1"><button type="button" @click="moveLocationDraft(index, -1)" :disabled="index === 0" class="rounded border px-2 text-xs disabled:opacity-30">↑</button><button type="button" @click="moveLocationDraft(index, 1)" :disabled="index === exclusivePageForm.sections.ubicaciones.locations.length - 1" class="rounded border px-2 text-xs disabled:opacity-30">↓</button><button type="button" @click="removeLocation(index)" class="rounded border border-red-200 px-2 text-xs text-red-600">Quitar</button></div></div><Input v-model="location.name" maxlength="160" placeholder="Nombre de la locación" class="h-9 rounded-lg text-xs" /><textarea v-model="location.description" maxlength="3000" rows="2" placeholder="Descripción" class="w-full rounded-lg border border-neutral-300 bg-white p-2 text-xs dark:border-neutral-700 dark:bg-neutral-950"></textarea><input type="file" accept="image/jpeg,image/png,image/webp" @change="(event) => location.image_file = (event.target as HTMLInputElement).files?.[0] || null" class="block w-full text-xs text-neutral-500" /><img v-if="location.image" :src="location.image" :alt="location.name" class="h-20 rounded-lg object-cover" /></article>
+                            <Input v-model="exclusivePageForm.sections.ubicaciones.link" type="url" placeholder="Enlace opcional (https://...)" class="h-9 rounded-lg text-xs" />
+                        </section>
+                        <section v-else class="space-y-4 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800"><h4 class="text-sm font-extrabold">Resultados</h4><p class="text-[11px] text-neutral-500">Enlace a los resultados o comunicados finales.</p><Input v-model="exclusivePageForm.sections.resultados.link" type="url" placeholder="Enlace opcional" class="h-9 rounded-lg text-xs" /></section>
+                    </div>
+                    <aside class="min-w-0 space-y-5 border-t border-neutral-200 bg-neutral-50/70 p-4 dark:border-neutral-800 dark:bg-neutral-950/30 sm:p-7 lg:col-start-2 lg:row-start-1 lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-t-0">
+                        <section v-if="exclusiveEditorTab !== 'participantes'" class="space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2"><div><h4 class="text-sm font-extrabold text-neutral-900 dark:text-white">Vista previa</h4><p class="text-[11px] text-neutral-500">Se actualiza mientras editas.</p></div><div class="inline-flex rounded-lg border border-neutral-200 bg-white p-1 dark:border-neutral-700 dark:bg-neutral-900"><button type="button" @click="exclusivePreviewMode = 'desktop'" class="rounded-md px-3 py-1.5 text-[11px] font-bold" :class="exclusivePreviewMode === 'desktop' ? 'bg-indigo-600 text-white' : 'text-neutral-500'">Escritorio</button><button type="button" @click="exclusivePreviewMode = 'mobile'" class="rounded-md px-3 py-1.5 text-[11px] font-bold" :class="exclusivePreviewMode === 'mobile' ? 'bg-indigo-600 text-white' : 'text-neutral-500'">Celular</button></div></div>
+                            <div class="flex w-full min-w-0 flex-col items-center gap-3 rounded-2xl bg-neutral-200 p-3 dark:bg-neutral-900 sm:p-4" :class="exclusivePreviewMode === 'mobile' ? 'xl:flex-row xl:items-start' : ''"><div class="flex w-full min-w-0 justify-center overflow-hidden" :class="exclusivePreviewMode === 'mobile' ? 'xl:w-[312px] xl:flex-none' : 'xl:flex-1'"><div v-if="exclusivePreviewMode === 'desktop'" class="aspect-video w-full max-w-[480px] overflow-hidden"><EventExclusiveHero :view="exclusivePreviewView" preview-mode="desktop" /></div><div v-else class="h-[500px] w-[312px] overflow-hidden"><EventExclusiveHero :view="exclusivePreviewView" preview-mode="mobile" /></div></div></div>
+                            <div v-if="exclusiveEditorTab === 'principal'" class="grid gap-4 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                                <div class="space-y-2"><h5 class="text-xs font-extrabold text-neutral-800 dark:text-neutral-200">Encuadre de imagen · {{ exclusivePreviewMode === 'desktop' ? 'Escritorio' : 'Celular' }}</h5><p class="text-[10px] text-neutral-500">Los desplazamientos responden al nivel de zoom.</p><div class="grid grid-cols-3 items-center justify-items-center gap-1"><span></span><button type="button" aria-label="Mover imagen arriba" @click="moveExclusiveCover(exclusivePreviewMode, 'up')" class="grid size-8 place-items-center rounded-md border"><ArrowUp class="size-4" /></button><span></span><button type="button" aria-label="Mover imagen a la izquierda" @click="moveExclusiveCover(exclusivePreviewMode, 'left')" class="grid size-8 place-items-center rounded-md border"><ArrowLeft class="size-4" /></button><span class="text-[9px] tabular-nums text-neutral-400">{{ exclusivePageForm.settings[`${exclusivePreviewMode}_cover_x`] }},{{ exclusivePageForm.settings[`${exclusivePreviewMode}_cover_y`] }}</span><button type="button" aria-label="Mover imagen a la derecha" @click="moveExclusiveCover(exclusivePreviewMode, 'right')" class="grid size-8 place-items-center rounded-md border"><ArrowRight class="size-4" /></button><span></span><button type="button" aria-label="Mover imagen abajo" @click="moveExclusiveCover(exclusivePreviewMode, 'down')" class="grid size-8 place-items-center rounded-md border"><ArrowDown class="size-4" /></button><span></span></div><label class="block text-[10px]">Zoom {{ Math.round(exclusivePageForm.settings[`${exclusivePreviewMode}_cover_zoom`] * 100) }}%<input v-model.number="exclusivePageForm.settings[`${exclusivePreviewMode}_cover_zoom`]" type="range" min="1" max="2.5" step="0.05" class="w-full accent-emerald-600" /></label></div>
+                                <div class="space-y-2"><h5 class="text-xs font-extrabold text-neutral-800 dark:text-neutral-200">Posición del título</h5><div class="flex gap-2"><button v-for="alignment in [{ value: 'left', label: 'Izquierda', icon: AlignLeft }, { value: 'center', label: 'Centro', icon: AlignCenter }, { value: 'right', label: 'Derecha', icon: AlignRight }]" :key="alignment.value" type="button" :aria-label="alignment.label" @click="exclusivePageForm.settings.title_position = alignment.value" class="grid size-8 place-items-center rounded-lg border" :class="exclusivePageForm.settings.title_position === alignment.value ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'"><component :is="alignment.icon" class="size-4" /></button></div><div class="grid grid-cols-3 items-center justify-items-center gap-1"><span></span><button type="button" aria-label="Mover título arriba" @click="moveExclusiveTitle('up')" class="grid size-7 place-items-center rounded-md border"><ArrowUp class="size-3.5" /></button><span></span><button type="button" aria-label="Mover título a la izquierda" @click="moveExclusiveTitle('left')" class="grid size-7 place-items-center rounded-md border"><ArrowLeft class="size-3.5" /></button><span class="text-[9px] tabular-nums text-neutral-400">{{ exclusivePageForm.settings.title_offset_x }},{{ exclusivePageForm.settings.title_offset_y }}</span><button type="button" aria-label="Mover título a la derecha" @click="moveExclusiveTitle('right')" class="grid size-7 place-items-center rounded-md border"><ArrowRight class="size-3.5" /></button><span></span><button type="button" aria-label="Mover título abajo" @click="moveExclusiveTitle('down')" class="grid size-7 place-items-center rounded-md border"><ArrowDown class="size-3.5" /></button><span></span></div><label class="block text-[10px]">Tamaño {{ exclusivePageForm.settings.title_size }} px<input v-model.number="exclusivePageForm.settings.title_size" type="range" min="32" max="112" step="2" class="w-full accent-emerald-600" /></label></div>
+                            </div>
+                        </section>
+                        <section v-else class="space-y-4 rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                            <div class="flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-950"><button v-for="tab in [{key:'editor',label:'Editor'},{key:'preview',label:'Vista previa'},{key:'stats',label:'Estadísticas'}]" :key="tab.key" type="button" @click="tab.key === 'stats' ? loadRegistrationStats() : registrationPanel = tab.key as 'editor' | 'preview'" class="rounded-md px-3 py-1.5 text-[11px] font-bold" :class="registrationPanel === tab.key ? 'bg-white text-emerald-700 shadow dark:bg-neutral-800' : 'text-neutral-500'">{{ tab.label }}</button></div>
+                            <div v-if="registrationPanel === 'editor'" class="space-y-2 text-xs"><p class="font-bold">Seleccionado: {{ selectedRegistrationForm?.title || 'Selecciona un formulario' }}</p><p class="text-neutral-500">Edita las preguntas y fechas desde el panel izquierdo. Los cambios se guardan con la página exclusiva.</p><Button type="button" @click="saveExclusivePage" class="rounded-lg bg-emerald-700 text-xs text-white">Guardar formulario</Button></div>
+                            <div v-else-if="registrationPanel === 'preview' && selectedRegistrationForm" class="max-h-[65vh] space-y-3 overflow-y-auto rounded-xl bg-neutral-50 p-4 dark:bg-neutral-950"><h5 class="text-lg font-black">{{ selectedRegistrationForm.title }}</h5><p>{{ selectedRegistrationForm.description }}</p><div v-for="field in selectedRegistrationForm.fields" :key="field.id" class="space-y-1"><label class="text-xs font-bold">{{ field.label }}</label><textarea v-if="field.type === 'textarea'" disabled rows="2" class="w-full rounded border p-2"></textarea><select v-else-if="field.type === 'select'" disabled class="h-9 w-full rounded border"><option>Selecciona una opción</option><option v-for="option in field.options" :key="option">{{ option }}</option></select><input v-else disabled :type="field.type === 'phone' ? 'tel' : field.type" class="h-9 w-full rounded border px-2" /></div></div>
+                            <div v-else-if="registrationPanel === 'stats'" class="max-h-[65vh] space-y-3 overflow-y-auto"><p v-if="registrationStatsError" class="rounded-xl bg-red-50 p-3 text-xs text-red-700">{{ registrationStatsError }}</p><p v-else-if="registrationStatsLoading" class="rounded-xl p-5 text-center text-xs text-neutral-500">Cargando respuestas…</p><template v-else-if="registrationStats"><div class="rounded-xl bg-emerald-50 p-4 dark:bg-emerald-950/40"><p class="text-[10px] font-bold uppercase text-emerald-800 dark:text-emerald-300">Inscripciones</p><p class="mt-1 text-2xl font-black">{{ registrationStats.total }}</p></div><article v-for="submission in registrationStats.submissions" :key="submission.id" class="rounded-xl border p-3 text-xs"><p class="mb-2 text-neutral-400">{{ new Date(submission.created_at).toLocaleString('es-PE') }}</p><div v-for="field in selectedRegistrationForm?.fields || []" :key="field.id"><strong>{{ field.label }}:</strong> {{ formatRegistrationAnswer(submission.answers[field.id]) }}</div></article></template></div>
+                        </section>
+                    </aside>
+                    <div class="sticky bottom-0 z-20 col-span-full flex justify-end gap-3 border-t bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900 sm:px-7 sm:py-4 lg:row-start-2"><Button type="button" variant="outline" @click="isExclusivePageOpen = false" class="rounded-xl text-xs">Cancelar</Button><Button type="submit" :disabled="exclusivePageForm.processing" class="rounded-xl bg-indigo-600 text-xs font-bold text-white">{{ exclusivePageForm.processing ? 'Guardando...' : 'Guardar página' }}</Button></div>
                 </form>
             </div>
         </div>

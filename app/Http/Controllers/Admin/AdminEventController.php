@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class AdminEventController extends Controller
 {
@@ -91,7 +92,11 @@ class AdminEventController extends Controller
 
         unset($validated['image_file'], $validated['image_files'], $validated['cover_image_file']);
 
-        Event::create($validated);
+        $event = Event::create($validated);
+
+        if ($request->boolean('open_exclusive_page')) {
+            return redirect()->back()->with('exclusive_event_id', $event->id)->with('success', 'Evento registrado. Ahora configura su página exclusiva.');
+        }
 
         return redirect()->back()->with('success', 'Evento registrado correctamente.');
     }
@@ -176,11 +181,137 @@ class AdminEventController extends Controller
 
         $event->update($validated);
 
+        if ($request->boolean('open_exclusive_page')) {
+            return redirect()->back()->with('exclusive_event_id', $event->id)->with('success', 'Evento actualizado. Ahora configura su página exclusiva.');
+        }
+
         return redirect()->back()->with('success', 'Evento actualizado correctamente.');
+    }
+
+    public function updateExclusivePage(Request $request, Event $event): RedirectResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'enabled' => 'required|boolean',
+            'sections' => 'required|array',
+            'sections.documentos' => 'required|array',
+            'sections.cronograma' => 'required|array',
+            'sections.cronograma.activities' => 'nullable|array|max:100',
+            'sections.cronograma.activities.*.id' => 'required|string|max:64',
+            'sections.cronograma.activities.*.subject' => 'required|string|max:160',
+            'sections.cronograma.activities.*.description' => 'nullable|string|max:3000',
+            'sections.cronograma.activities.*.date' => 'required|date_format:Y-m-d',
+            'sections.cronograma.activities.*.time' => 'nullable|date_format:H:i',
+            'sections.participantes' => 'required|array',
+            'sections.participantes.forms' => 'nullable|array|max:30',
+            'sections.participantes.forms.*.id' => 'required|string|regex:/^[a-zA-Z0-9_-]+$/|max:64',
+            'sections.participantes.forms.*.enabled' => 'required|boolean',
+            'sections.participantes.forms.*.title' => 'required|string|max:160',
+            'sections.participantes.forms.*.description' => 'nullable|string|max:5000',
+            'sections.participantes.forms.*.opens_at' => 'nullable|date',
+            'sections.participantes.forms.*.closes_at' => 'nullable|date',
+            'sections.participantes.forms.*.fields' => 'required|array|min:1|max:40',
+            'sections.participantes.forms.*.fields.*.id' => 'required|string|regex:/^[a-zA-Z0-9_-]+$/|max:64',
+            'sections.participantes.forms.*.fields.*.label' => 'required|string|max:160',
+            'sections.participantes.forms.*.fields.*.type' => 'required|in:text,textarea,email,phone,number,date,select,radio,checkbox,file',
+            'sections.participantes.forms.*.fields.*.required' => 'required|boolean',
+            'sections.participantes.forms.*.fields.*.options' => 'nullable|array|max:50',
+            'sections.participantes.forms.*.fields.*.options.*' => 'string|max:160',
+            'sections.ubicaciones' => 'required|array',
+            'sections.ubicaciones.croquis_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'sections.ubicaciones.locations' => 'nullable|array|max:30',
+            'sections.ubicaciones.locations.*.id' => 'required|string|max:64',
+            'sections.ubicaciones.locations.*.name' => 'required|string|max:160',
+            'sections.ubicaciones.locations.*.description' => 'nullable|string|max:3000',
+            'sections.ubicaciones.locations.*.image' => 'nullable|string|max:1000',
+            'sections.ubicaciones.locations.*.image_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'sections.resultados' => 'required|array',
+            'sections.*.link' => 'nullable|url|max:1000',
+            'settings' => 'required|array',
+            'settings.title' => 'required|string|max:255',
+            'settings.subtitle' => 'nullable|string|max:255',
+            'settings.event_date' => 'required|date',
+            'settings.time' => 'nullable|string|max:50',
+            'settings.location' => 'required|string|max:255',
+            'settings.about' => 'required|string|max:10000',
+            'settings.theme' => 'required|in:emerald,forest,teal,lime,mint',
+            'settings.title_position' => 'required|in:left,center,right',
+            'settings.title_size' => 'required|integer|min:32|max:112',
+            'settings.title_offset_x' => 'required|integer|min:-120|max:120',
+            'settings.title_offset_y' => 'required|integer|min:-120|max:120',
+            'settings.desktop_cover_zoom' => 'required|numeric|min:1|max:2.5',
+            'settings.desktop_cover_x' => 'required|integer|min:0|max:100',
+            'settings.desktop_cover_y' => 'required|integer|min:0|max:100',
+            'settings.mobile_cover_zoom' => 'required|numeric|min:1|max:2.5',
+            'settings.mobile_cover_x' => 'required|integer|min:0|max:100',
+            'settings.mobile_cover_y' => 'required|integer|min:0|max:100',
+            'settings.desktop_cover_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+        ]);
+        $validator->after(function ($validator) use ($request) {
+            $forms = $request->input('sections.participantes.forms', []);
+            if (!is_array($forms)) return;
+            foreach ($forms as $formIndex => $form) {
+                foreach (($form['fields'] ?? []) as $index => $field) {
+                    if (!is_array($field)) continue;
+                    if (in_array($field['type'] ?? '', ['select', 'radio', 'checkbox'], true)
+                        && empty(array_filter($field['options'] ?? [], fn ($option) => is_string($option) && trim($option) !== ''))) {
+                        $validator->errors()->add("sections.participantes.forms.{$formIndex}.fields.{$index}.options", 'Agrega al menos una opción a esta pregunta.');
+                    }
+                }
+            }
+        });
+        $validated = $validator->validate();
+
+        $locationSection = $validated['sections']['ubicaciones'];
+        if ($request->hasFile('sections.ubicaciones.croquis_file')) {
+            $locationSection['croquis'] = Storage::url($request->file('sections.ubicaciones.croquis_file')->store("events/{$event->id}/locations", 'public'));
+        }
+        unset($locationSection['croquis_file']);
+        $locations = $locationSection['locations'] ?? [];
+        foreach ($locations as $index => $location) {
+            if ($request->hasFile("sections.ubicaciones.locations.{$index}.image_file")) {
+                $location['image'] = Storage::url($request->file("sections.ubicaciones.locations.{$index}.image_file")->store("events/{$event->id}/locations", 'public'));
+            }
+            unset($location['image_file']);
+            $location['order'] = $index + 1;
+            $locations[$index] = $location;
+        }
+        $locationSection['locations'] = array_values($locations);
+        $validated['sections']['ubicaciones'] = $locationSection;
+
+        foreach ($validated['sections'] as &$section) {
+            if (!is_array($section)) continue;
+            unset($section['title'], $section['content']);
+        }
+        unset($section);
+
+        $settings = $validated['settings'];
+        unset($settings['desktop_cover_file']);
+        $previousSettings = $event->exclusive_page_settings ?? [];
+        $defaultCover = $event->cover_image_path ?? $event->image_path;
+        $previousDesktopCover = $previousSettings['desktop_cover'] ?? $defaultCover;
+        $settings['desktop_cover'] = $previousDesktopCover;
+        $settings['mobile_cover'] = $previousDesktopCover;
+        if ($request->hasFile('settings.desktop_cover_file')) {
+            $path = $request->file('settings.desktop_cover_file')->store('events/exclusive', 'public');
+            $settings['desktop_cover'] = Storage::url($path);
+            $settings['mobile_cover'] = $settings['desktop_cover'];
+        }
+
+        $event->update([
+            'has_exclusive_page' => $validated['enabled'],
+            'exclusive_page_content' => $validated['sections'],
+            'exclusive_page_settings' => $settings,
+        ]);
+
+        return redirect()->back()->with('success', 'Página exclusiva guardada correctamente.');
     }
 
     public function destroy(Event $event): RedirectResponse
     {
+        foreach ($event->exclusiveDocuments as $document) {
+            Storage::disk('local')->delete($document->file_path);
+        }
+        $event->exclusiveDocuments()->delete();
         $this->deleteLocalEventImages($event);
 
         $event->delete();

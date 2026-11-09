@@ -3,6 +3,8 @@
 use App\Http\Controllers\AboutUsController;
 use App\Http\Controllers\DocumentosController;
 use App\Http\Controllers\EventosController;
+use App\Http\Controllers\EventExclusiveDocumentController;
+use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProyeccionSocialController;
 use App\Http\Controllers\SeguimientoGraduadoController;
@@ -18,6 +20,9 @@ Route::get('/documentos', DocumentosController::class)->name('documentos');
 Route::get('/eventos', [EventosController::class, 'index'])->name('eventos');
 Route::redirect('/eventos/admin', '/admin');
 Route::get('/eventos/{event}', [EventosController::class, 'show'])->whereNumber('event')->name('eventos.show');
+Route::post('/eventos/{event}/registro', [EventRegistrationController::class, 'store'])->whereNumber('event')->middleware('throttle:10,1')->name('eventos.registration.store');
+Route::get('/eventos/{event}/documentos/{document}/archivo', [EventExclusiveDocumentController::class, 'preview'])->whereNumber('event')->whereNumber('document')->name('eventos.exclusive-documents.preview');
+Route::get('/eventos/{event}/documentos/{document}/descargar', [EventExclusiveDocumentController::class, 'download'])->whereNumber('event')->whereNumber('document')->name('eventos.exclusive-documents.download');
 Route::inertia('/sandbox', 'public/Sandbox')->name('sandbox');
 
 // Public Certificates Routes
