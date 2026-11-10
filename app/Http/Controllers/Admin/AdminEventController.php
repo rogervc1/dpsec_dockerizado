@@ -218,13 +218,38 @@ class AdminEventController extends Controller
             'sections.participantes.forms.*.fields.*.options.*' => 'string|max:160',
             'sections.ubicaciones' => 'required|array',
             'sections.ubicaciones.croquis_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'sections.ubicaciones.croquis' => 'nullable|string|max:1000',
             'sections.ubicaciones.locations' => 'nullable|array|max:30',
             'sections.ubicaciones.locations.*.id' => 'required|string|max:64',
             'sections.ubicaciones.locations.*.name' => 'required|string|max:160',
-            'sections.ubicaciones.locations.*.description' => 'nullable|string|max:3000',
             'sections.ubicaciones.locations.*.image' => 'nullable|string|max:1000',
             'sections.ubicaciones.locations.*.image_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'sections.ubicaciones.locations.*.x' => 'required|numeric|min:0|max:100',
+            'sections.ubicaciones.locations.*.y' => 'required|numeric|min:0|max:100',
+            'sections.ubicaciones.locations.*.color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'sections.resultados' => 'required|array',
+            'sections.resultados.categories' => 'nullable|array|max:30',
+            'sections.resultados.categories.*.id' => 'required|string|max:64',
+            'sections.resultados.categories.*.name' => 'required|string|max:160',
+            'sections.resultados.categories.*.winners' => 'nullable|array|max:3',
+            'sections.resultados.categories.*.winners.*.id' => 'required|string|max:64',
+            'sections.resultados.categories.*.winners.*.name' => 'required|string|max:160',
+            'sections.resultados.categories.*.winners.*.image' => 'nullable|string|max:1000',
+            'sections.resultados.categories.*.winners.*.image_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'sections.resultados.type' => 'nullable|in:results_image,table,youtube,gallery',
+            'sections.resultados.results_image' => 'nullable|string|max:1000',
+            'sections.resultados.results_image_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
+            'sections.resultados.participants' => 'nullable|array|max:500',
+            'sections.resultados.participants.*.id' => 'required|string|max:64',
+            'sections.resultados.participants.*.name' => 'required|string|max:160',
+            'sections.resultados.participants.*.score' => 'required|string|max:80',
+            'sections.resultados.youtube_url' => 'nullable|url|max:1000',
+            'sections.resultados.gallery' => 'nullable|array|max:100',
+            'sections.resultados.gallery.*.id' => 'required|string|max:64',
+            'sections.resultados.gallery.*.title' => 'nullable|string|max:160',
+            'sections.resultados.gallery.*.description' => 'nullable|string|max:2000',
+            'sections.resultados.gallery.*.image' => 'nullable|string|max:1000',
+            'sections.resultados.gallery.*.image_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10240',
             'sections.*.link' => 'nullable|url|max:1000',
             'settings' => 'required|array',
             'settings.title' => 'required|string|max:255',
@@ -248,14 +273,47 @@ class AdminEventController extends Controller
         ]);
         $validator->after(function ($validator) use ($request) {
             $forms = $request->input('sections.participantes.forms', []);
-            if (!is_array($forms)) return;
-            foreach ($forms as $formIndex => $form) {
-                foreach (($form['fields'] ?? []) as $index => $field) {
-                    if (!is_array($field)) continue;
-                    if (in_array($field['type'] ?? '', ['select', 'radio', 'checkbox'], true)
-                        && empty(array_filter($field['options'] ?? [], fn ($option) => is_string($option) && trim($option) !== ''))) {
-                        $validator->errors()->add("sections.participantes.forms.{$formIndex}.fields.{$index}.options", 'Agrega al menos una opción a esta pregunta.');
+            if (is_array($forms)) {
+                foreach ($forms as $formIndex => $form) {
+                    foreach (($form['fields'] ?? []) as $index => $field) {
+                        if (!is_array($field)) continue;
+                        if (in_array($field['type'] ?? '', ['select', 'radio', 'checkbox'], true)
+                            && empty(array_filter($field['options'] ?? [], fn ($option) => is_string($option) && trim($option) !== ''))) {
+                            $validator->errors()->add("sections.participantes.forms.{$formIndex}.fields.{$index}.options", 'Agrega al menos una opción a esta pregunta.');
+                        }
                     }
+                }
+            }
+
+            if (blank($request->input('sections.ubicaciones.croquis')) && !$request->hasFile('sections.ubicaciones.croquis_file')) {
+                $validator->errors()->add('sections.ubicaciones.croquis_file', 'Carga el croquis antes de guardar las ubicaciones.');
+            }
+
+            foreach ($request->input('sections.ubicaciones.locations', []) as $index => $location) {
+                if (!is_array($location)) continue;
+                if (blank($location['image'] ?? null) && !$request->hasFile("sections.ubicaciones.locations.{$index}.image_file")) {
+                    $validator->errors()->add("sections.ubicaciones.locations.{$index}.image_file", 'Carga una imagen para esta ubicación.');
+                }
+            }
+
+            $results = $request->input('sections.resultados', []);
+            foreach (($results['categories'] ?? []) as $categoryIndex => $category) {
+                foreach (($category['winners'] ?? []) as $winnerIndex => $winner) {
+                    if (is_array($winner) && blank($winner['image'] ?? null) && !$request->hasFile("sections.resultados.categories.{$categoryIndex}.winners.{$winnerIndex}.image_file")) {
+                        $validator->errors()->add("sections.resultados.categories.{$categoryIndex}.winners.{$winnerIndex}.image_file", 'Carga una imagen para este ganador.');
+                    }
+                }
+            }
+            $type = $results['type'] ?? '';
+            if ($type === 'results_image' && blank($results['results_image'] ?? null) && !$request->hasFile('sections.resultados.results_image_file')) {
+                $validator->errors()->add('sections.resultados.results_image_file', 'Carga la imagen de resultados.');
+            }
+            if ($type === 'youtube' && blank($results['youtube_url'] ?? null)) {
+                $validator->errors()->add('sections.resultados.youtube_url', 'Ingresa el enlace de YouTube.');
+            }
+            foreach (($results['gallery'] ?? []) as $index => $item) {
+                if (is_array($item) && blank($item['image'] ?? null) && !$request->hasFile("sections.resultados.gallery.{$index}.image_file")) {
+                    $validator->errors()->add("sections.resultados.gallery.{$index}.image_file", 'Carga una imagen para este elemento.');
                 }
             }
         });
@@ -277,6 +335,32 @@ class AdminEventController extends Controller
         }
         $locationSection['locations'] = array_values($locations);
         $validated['sections']['ubicaciones'] = $locationSection;
+
+        $results = $validated['sections']['resultados'];
+        foreach (($results['categories'] ?? []) as $categoryIndex => $category) {
+            foreach (($category['winners'] ?? []) as $winnerIndex => $winner) {
+                $fileKey = "sections.resultados.categories.{$categoryIndex}.winners.{$winnerIndex}.image_file";
+                if ($request->hasFile($fileKey)) {
+                    $winner['image'] = Storage::url($request->file($fileKey)->store("events/{$event->id}/results", 'public'));
+                }
+                unset($winner['image_file']);
+                $category['winners'][$winnerIndex] = $winner;
+            }
+            $results['categories'][$categoryIndex] = $category;
+        }
+        if ($request->hasFile('sections.resultados.results_image_file')) {
+            $results['results_image'] = Storage::url($request->file('sections.resultados.results_image_file')->store("events/{$event->id}/results", 'public'));
+        }
+        unset($results['results_image_file']);
+        foreach (($results['gallery'] ?? []) as $index => $item) {
+            $fileKey = "sections.resultados.gallery.{$index}.image_file";
+            if ($request->hasFile($fileKey)) {
+                $item['image'] = Storage::url($request->file($fileKey)->store("events/{$event->id}/results", 'public'));
+            }
+            unset($item['image_file']);
+            $results['gallery'][$index] = $item;
+        }
+        $validated['sections']['resultados'] = $results;
 
         foreach ($validated['sections'] as &$section) {
             if (!is_array($section)) continue;
