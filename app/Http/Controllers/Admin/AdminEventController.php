@@ -254,21 +254,29 @@ class AdminEventController extends Controller
             'settings' => 'required|array',
             'settings.title' => 'required|string|max:255',
             'settings.subtitle' => 'nullable|string|max:255',
+            'settings.subtitle_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'settings.subtitle_use_theme' => 'required|boolean',
             'settings.event_date' => 'required|date',
             'settings.time' => 'nullable|string|max:50',
             'settings.location' => 'required|string|max:255',
             'settings.about' => 'required|string|max:10000',
             'settings.theme' => 'required|in:emerald,forest,teal,lime,mint',
+            'settings.theme_custom_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'settings.title_position' => 'required|in:left,center,right',
             'settings.title_size' => 'required|integer|min:32|max:112',
             'settings.title_offset_x' => 'required|integer|min:-120|max:120',
-            'settings.title_offset_y' => 'required|integer|min:-120|max:120',
+            'settings.title_offset_y' => 'required|integer|min:-120|max:40',
+            'settings.mobile_title_position' => 'required|in:left,center,right',
+            'settings.mobile_title_size' => 'required|integer|min:32|max:112',
+            'settings.mobile_title_offset_x' => 'required|integer|min:-120|max:120',
+            'settings.mobile_title_offset_y' => 'required|integer|min:-120|max:224',
+            'settings.config_linked' => 'required|boolean',
             'settings.desktop_cover_zoom' => 'required|numeric|min:1|max:2.5',
-            'settings.desktop_cover_x' => 'required|integer|min:0|max:100',
-            'settings.desktop_cover_y' => 'required|integer|min:0|max:100',
+            'settings.desktop_cover_x' => 'required|numeric|min:0|max:100',
+            'settings.desktop_cover_y' => 'required|numeric|min:0|max:100',
             'settings.mobile_cover_zoom' => 'required|numeric|min:1|max:2.5',
-            'settings.mobile_cover_x' => 'required|integer|min:0|max:100',
-            'settings.mobile_cover_y' => 'required|integer|min:0|max:100',
+            'settings.mobile_cover_x' => 'required|numeric|min:0|max:100',
+            'settings.mobile_cover_y' => 'required|numeric|min:0|max:100',
             'settings.desktop_cover_file' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
         $validator->after(function ($validator) use ($request) {
@@ -369,6 +377,9 @@ class AdminEventController extends Controller
         unset($section);
 
         $settings = $validated['settings'];
+        $settings['subtitle_use_theme'] = $request->boolean('settings.subtitle_use_theme');
+        $settings['config_linked'] = $request->boolean('settings.config_linked');
+        unset($settings['desktop_config_linked'], $settings['mobile_config_linked']);
         unset($settings['desktop_cover_file']);
         $previousSettings = $event->exclusive_page_settings ?? [];
         $defaultCover = $event->cover_image_path ?? $event->image_path;

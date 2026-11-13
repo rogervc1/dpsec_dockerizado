@@ -7,7 +7,13 @@ export interface ExclusiveEventView {
     titlePosition: 'left' | 'center' | 'right';
     titleOffsetX: number;
     titleOffsetY: number;
+    mobileTitlePosition: 'left' | 'center' | 'right';
+    mobileTitleSize: number;
+    mobileTitleOffsetX: number;
+    mobileTitleOffsetY: number;
     subtitle: string;
+    subtitleColor: string;
+    customAccent: string;
     date: string;
     eventDate: string;
     time: string;
@@ -59,7 +65,13 @@ export function getExclusiveEventView(event: Record<string, any>): ExclusiveEven
         titlePosition: settings.title_position || 'left',
         titleOffsetX: Number(settings.title_offset_x || 0),
         titleOffsetY: Number(settings.title_offset_y || 0),
+        mobileTitlePosition: settings.mobile_title_position || settings.title_position || 'left',
+        mobileTitleSize: Math.min(112, Math.max(32, Number(settings.mobile_title_size || settings.title_size || 76))),
+        mobileTitleOffsetX: Number(settings.mobile_title_offset_x ?? settings.title_offset_x ?? 0),
+        mobileTitleOffsetY: Number(settings.mobile_title_offset_y ?? settings.title_offset_y ?? 0),
         subtitle: settings.subtitle || '',
+        subtitleColor: settings.subtitle_color || '#ffffff',
+        customAccent: settings.theme_custom_color || '',
         date: parsedDate?.toLocaleDateString('es-PE', { day: 'numeric', month: 'long' }) || 'Fecha por confirmar',
         eventDate,
         time: settings.time ?? event.time ?? '',

@@ -21,24 +21,31 @@ const themeColors: Record<string, { accent: string; soft: string; strong: string
 };
 const themeStyle = computed(() => {
     const color = themeColors[props.view.theme] || themeColors.emerald;
+    const accent = props.view.customAccent || color.accent;
     return {
-        '--event-accent': color.accent,
+        '--event-accent': accent,
         '--event-soft': color.soft,
         '--event-strong': color.strong,
         '--event-title-size': `${props.view.titleSize}px`,
+        '--event-title-max-chars': String(props.view.titleMaxChars),
         '--event-title-offset-x': `${props.view.titleOffsetX}px`,
         '--event-title-offset-y': `${props.view.titleOffsetY}px`,
+        '--event-mobile-title-size': `${props.view.mobileTitleSize}px`,
+        '--event-mobile-title-offset-x': `${props.view.mobileTitleOffsetX}px`,
+        '--event-mobile-title-offset-y': `${props.view.mobileTitleOffsetY}px`,
         '--event-desktop-cover-zoom': String(props.view.desktopCoverZoom),
         '--event-desktop-cover-shift-x': `${(50 - props.view.desktopCoverX) * (props.view.desktopCoverZoom - 1)}%`,
         '--event-desktop-cover-shift-y': `${(50 - props.view.desktopCoverY) * (props.view.desktopCoverZoom - 1)}%`,
         '--event-mobile-cover-zoom': String(props.view.mobileCoverZoom),
+        '--event-mobile-cover-x': `${props.view.mobileCoverX}%`,
+        '--event-mobile-cover-y': `${props.view.mobileCoverY}%`,
         '--event-mobile-cover-shift-x': `${(50 - props.view.mobileCoverX) * (props.view.mobileCoverZoom - 1)}%`,
         '--event-mobile-cover-shift-y': `${(50 - props.view.mobileCoverY) * (props.view.mobileCoverZoom - 1)}%`,
     } as Record<string, string>;
 });
 const titleFontSize = computed(() => {
     if (props.previewMode === 'desktop') return `${props.view.titleSize * 0.7125}px`;
-    if (props.previewMode === 'mobile') return `min(var(--event-title-size), calc(200cqw / ${props.view.titleMaxChars}))`;
+    if (props.previewMode === 'mobile') return `min(var(--event-mobile-title-size), calc(250cqw / ${props.view.titleMaxChars}))`;
     return 'var(--event-title-size)';
 });
 
@@ -72,7 +79,7 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
 <template>
     <section
         class="event-hero relative isolate flex items-center overflow-hidden bg-slate-950 text-white"
-        :class="previewMode ? (previewMode === 'mobile' ? 'event-hero--mobile-preview h-[calc(100svh-9rem)] w-[390px] max-w-none origin-top-left scale-[0.8]' : 'event-hero--desktop-preview h-[200%] w-[200%] max-w-[2560px] origin-top-left scale-50') : 'min-h-[calc(100svh-9rem)] lg:min-h-[calc(100svh-6rem)]'"
+        :class="previewMode ? (previewMode === 'mobile' ? 'event-hero--mobile-preview h-[calc(100svh-9rem)] w-[320px] max-w-none flex-none origin-top scale-[0.8]' : 'event-hero--desktop-preview h-[200%] w-[200%] max-w-[2560px] origin-top-left scale-50') : 'min-h-[calc(100svh-9rem)] lg:min-h-[calc(100svh-6rem)]'"
         :style="themeStyle"
     >
         <img v-if="view.image" :src="view.image" :alt="view.title" class="event-hero__background absolute inset-0 -z-20 size-full object-cover" />
@@ -90,16 +97,16 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
             class="event-hero__content mx-auto flex w-full max-w-7xl flex-col justify-between gap-5 px-4 pb-5 pt-20 sm:px-8 sm:pb-7 sm:pt-24 lg:px-10 lg:py-14"
             :class="previewMode ? 'h-full' : 'min-h-[calc(100svh-9rem)] lg:min-h-[calc(100svh-6rem)]'"
         >
-            <div class="event-hero__heading [container-type:inline-size]" :class="{ 'text-center': view.titlePosition === 'center', 'text-right': view.titlePosition === 'right', 'text-left': view.titlePosition === 'left' }">
-                <div class="mb-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-semibold text-white/90 sm:mb-5 sm:gap-x-6 sm:gap-y-2 sm:text-sm lg:text-base">
+            <div class="event-hero__heading [container-type:inline-size]" :class="{ 'text-center': view.titlePosition === 'center', 'text-right': view.titlePosition === 'right', 'text-left': view.titlePosition === 'left', 'mobile-title-center': view.mobileTitlePosition === 'center', 'mobile-title-right': view.mobileTitlePosition === 'right' }">
+                <div class="mb-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-semibold text-white/90 sm:mb-5 sm:gap-x-6 sm:gap-y-2 sm:text-sm lg:text-base" :class="[view.titlePosition === 'center' ? 'justify-center' : view.titlePosition === 'right' ? 'justify-end' : 'justify-start', view.mobileTitlePosition === 'center' ? 'mobile-meta-center' : view.mobileTitlePosition === 'right' ? 'mobile-meta-right' : 'mobile-meta-left']">
                     <span class="inline-flex min-w-0 items-center gap-1.5"><Calendar class="size-3.5 shrink-0 text-[var(--event-accent)] sm:size-4" /><span>{{ view.date }}<template v-if="view.time"> · {{ view.time }}</template></span></span>
                     <span v-if="view.location" class="inline-flex min-w-0 items-center gap-1.5"><MapPin class="size-3.5 shrink-0 text-[var(--event-accent)] sm:size-4" /><span class="break-words">{{ view.location }}</span></span>
                 </div>
+                <p v-if="view.subtitle" class="mb-2 max-w-3xl break-words text-sm font-semibold sm:mb-3 sm:text-base lg:text-lg" :class="[view.titlePosition === 'center' ? 'mx-auto' : view.titlePosition === 'right' ? 'ml-auto' : '', view.mobileTitlePosition === 'center' ? 'mobile-subtitle-center' : view.mobileTitlePosition === 'right' ? 'mobile-subtitle-right' : 'mobile-subtitle-left']" :style="{ color: view.subtitleColor }">{{ view.subtitle }}</p>
                 <h1 :aria-label="view.title" :style="{ fontSize: titleFontSize }" class="event-hero__title overflow-hidden font-black leading-[1.02] tracking-tight text-balance">
                     <span class="block break-words text-white">{{ view.titleFirst }}</span>
                     <span class="block break-words text-[var(--event-accent)]">{{ view.titleSecond }}</span>
                 </h1>
-                <p v-if="view.subtitle" class="mt-2 max-w-3xl break-words text-sm font-semibold text-white/90 sm:mt-3 sm:text-base lg:text-lg" :class="view.titlePosition === 'center' ? 'mx-auto' : view.titlePosition === 'right' ? 'ml-auto' : ''">{{ view.subtitle }}</p>
             </div>
 
             <div class="event-hero__lower mt-auto">
@@ -137,6 +144,15 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
     transform: translate(var(--event-desktop-cover-shift-x), var(--event-desktop-cover-shift-y)) scale(var(--event-desktop-cover-zoom));
 }
 
+.event-hero--mobile-preview .event-hero__background {
+    object-position: var(--event-mobile-cover-x) var(--event-mobile-cover-y);
+    transform: translate(var(--event-mobile-cover-shift-x), var(--event-mobile-cover-shift-y)) scale(var(--event-mobile-cover-zoom));
+}
+
+.event-hero--mobile-preview .event-hero__content {
+    padding: 32px 16px 12px;
+}
+
 .event-hero__heading {
     transform: translate(var(--event-title-offset-x), var(--event-title-offset-y));
 }
@@ -153,6 +169,15 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
     align-self: start;
 }
 
+.event-hero--desktop-preview .event-hero__heading > div:first-child {
+    font-size: 12px;
+}
+
+.event-hero--desktop-preview .event-hero__heading > div:first-child svg {
+    width: 14px;
+    height: 14px;
+}
+
 .event-hero--desktop-preview .event-hero__lower {
     min-height: 0;
     margin-top: 0;
@@ -163,13 +188,25 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
 
 @media (max-width: 767px) {
     .event-hero__background {
+        object-position: var(--event-mobile-cover-x) var(--event-mobile-cover-y);
         transform: translate(var(--event-mobile-cover-shift-x), var(--event-mobile-cover-shift-y)) scale(var(--event-mobile-cover-zoom));
     }
+
+    .event-hero:not(.event-hero--mobile-preview) .event-hero__heading {
+        transform: translate(var(--event-mobile-title-offset-x), var(--event-mobile-title-offset-y));
+    }
+
+    .event-hero__heading.mobile-title-center { text-align: center; }
+    .event-hero__heading.mobile-title-right { text-align: right; }
+    .mobile-meta-center { justify-content: center; }
+    .mobile-meta-right { justify-content: flex-end; }
+    .event-hero__heading > .mobile-subtitle-center { margin-right: auto; margin-left: auto; }
+    .event-hero__heading > .mobile-subtitle-right { margin-right: 0; margin-left: auto; }
 }
 
 @media (max-width: 639px) {
-    .event-hero__title {
-        font-size: min(var(--event-title-size), 30px) !important;
+    .event-hero:not(.event-hero--mobile-preview) .event-hero__title {
+        font-size: min(var(--event-mobile-title-size), calc(250cqw / var(--event-title-max-chars))) !important;
     }
 
     .event-hero:not(.event-hero--mobile-preview) .event-hero__content {
@@ -199,6 +236,14 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
         gap: 4px;
         margin-bottom: 8px;
         font-size: 11px;
+    }
+
+    .event-hero:not(.event-hero--mobile-preview) .event-hero__heading.text-center > div:first-child {
+        align-items: center;
+    }
+
+    .event-hero:not(.event-hero--mobile-preview) .event-hero__heading.text-right > div:first-child {
+        align-items: flex-end;
     }
 
     .event-hero:not(.event-hero--mobile-preview) .event-hero__heading > h1 + p {
@@ -282,15 +327,38 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
     }
 }
 
-.event-hero--mobile-preview .event-hero__title {
-    font-size: min(var(--event-title-size), 30px) !important;
+.event-hero--mobile-preview .event-hero__heading > div:first-child {
+    margin-bottom: 4px;
+}
+
+.event-hero--mobile-preview .event-hero__heading > p {
+    margin-bottom: 2px;
+    font-size: 12.96px;
+    line-height: 1.25;
 }
 
 .event-hero--mobile-preview .event-hero__heading {
     container-type: inline-size;
+    transform: translate(var(--event-mobile-title-offset-x), var(--event-mobile-title-offset-y));
+}
+
+.event-hero--mobile-preview .event-hero__heading.mobile-title-center { text-align: center; }
+.event-hero--mobile-preview .event-hero__heading.mobile-title-right { text-align: right; }
+.event-hero--mobile-preview .mobile-meta-center { justify-content: center; }
+.event-hero--mobile-preview .mobile-meta-right { justify-content: flex-end; }
+.event-hero--mobile-preview .event-hero__heading > .mobile-subtitle-center { margin-right: auto; margin-left: auto; }
+.event-hero--mobile-preview .event-hero__heading > .mobile-subtitle-right { margin-right: 0; margin-left: auto; }
+
+.event-hero--mobile-preview .event-hero__heading.text-center > div:first-child {
+    align-items: center;
+}
+
+.event-hero--mobile-preview .event-hero__heading.text-right > div:first-child {
+    align-items: flex-end;
 }
 
 .event-hero--mobile-preview .event-hero__background {
+    object-position: var(--event-mobile-cover-x) var(--event-mobile-cover-y);
     transform: translate(var(--event-mobile-cover-shift-x), var(--event-mobile-cover-shift-y)) scale(var(--event-mobile-cover-zoom));
 }
 
@@ -298,7 +366,7 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
     .event-hero--mobile-preview .event-hero__content {
         justify-content: flex-start;
         gap: 8px;
-        padding: 56px 16px 12px;
+        padding: 32px 16px 12px;
     }
 
     .event-hero--mobile-preview .event-hero__lower {
@@ -317,7 +385,7 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
         align-items: flex-start;
         gap: 4px;
         margin-bottom: 8px;
-        font-size: 11px;
+        font-size: 9.9px;
     }
 
     .event-hero--mobile-preview .event-hero__heading > h1 + p {
