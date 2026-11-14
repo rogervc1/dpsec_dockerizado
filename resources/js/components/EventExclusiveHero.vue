@@ -195,8 +195,33 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
     min-height: 0;
     margin-top: 0;
     align-self: end;
-    transform: scale(0.95);
+    transform: scale(0.9, 0.95);
     transform-origin: bottom center;
+}
+
+.event-hero--desktop-preview .event-hero__lower > .grid > div:first-child > div {
+    position: relative;
+    top: 6px;
+    padding-block: 10px;
+}
+
+.event-hero--desktop-preview .event-hero__lower > .grid > div:first-child > div > p {
+    font-size: 90%;
+    line-height: 1.25;
+}
+
+.event-hero--desktop-preview .event-hero__lower > .grid > div:nth-child(2) .grid > div {
+    position: relative;
+    top: 6px;
+    padding-block: 10px;
+}
+
+.event-hero--desktop-preview .event-hero__lower > .grid > div:nth-child(2) .grid > div > div:first-child {
+    font-size: 2.5rem;
+}
+
+.event-hero--desktop-preview .event-hero__lower > .grid > div:nth-child(2) .grid > div > div:last-child {
+    font-size: 9px;
 }
 
 @media (max-width: 767px) {
@@ -494,6 +519,37 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
         white-space: normal;
         overflow-wrap: anywhere;
     }
+}
+
+.event-hero--mobile-preview .event-hero__lower > .grid > div:first-child > div {
+    position: relative;
+    top: 5px;
+    padding-block: 5px;
+}
+
+.event-hero--mobile-preview .event-hero__lower > .grid > div:first-child p {
+    font-size: 9px;
+    line-height: 13px;
+}
+
+.event-hero--mobile-preview .event-hero__lower > .grid > div:nth-child(2) .grid > div {
+    position: relative;
+    top: 5px;
+    padding-block: 4px;
+}
+
+.event-hero--mobile-preview .event-hero__lower > .grid > div:nth-child(2) .grid > div > div:first-child {
+    font-size: 15px;
+}
+
+.event-hero--mobile-preview .event-hero__lower > .grid > div:nth-child(2) .grid > div > div:last-child {
+    font-size: 6px;
+}
+
+.event-hero--mobile-preview .event-hero__lower > .grid,
+.event-hero--mobile-preview .event-hero__lower > div:last-child {
+    transform: scaleX(0.9);
+    transform-origin: center;
 }
 
 </style>
