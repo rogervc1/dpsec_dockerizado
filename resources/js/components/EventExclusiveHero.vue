@@ -135,11 +135,11 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
             :class="previewMode ? 'h-full' : 'min-h-[calc(100svh-9rem)] lg:min-h-[calc(100svh-6rem)]'"
         >
             <div class="event-hero__heading [container-type:inline-size]" :class="{ 'text-center': view.titlePosition === 'center', 'text-right': view.titlePosition === 'right', 'text-left': view.titlePosition === 'left', 'mobile-title-center': view.mobileTitlePosition === 'center', 'mobile-title-right': view.mobileTitlePosition === 'right' }">
-                <div class="mb-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-semibold text-white/90 sm:mb-5 sm:gap-x-6 sm:gap-y-2 sm:text-sm lg:text-base" :class="[view.titlePosition === 'center' ? 'justify-center' : view.titlePosition === 'right' ? 'justify-end' : 'justify-start', view.mobileTitlePosition === 'center' ? 'mobile-meta-center' : view.mobileTitlePosition === 'right' ? 'mobile-meta-right' : 'mobile-meta-left']">
+                <div class="mb-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-semibold text-white/90 sm:mb-5 sm:gap-x-6 sm:gap-y-2 sm:text-sm lg:text-base" :class="[view.titlePosition === 'center' ? 'justify-center' : view.titlePosition === 'right' ? 'justify-end' : 'justify-start', view.mobileTitlePosition === 'center' ? 'mobile-meta-center' : view.mobileTitlePosition === 'right' ? 'mobile-meta-right' : 'mobile-meta-left']" :style="previewMode === 'desktop' ? { position: 'relative', top: '20px', fontSize: '10.4px', lineHeight: '24px' } : undefined">
                     <span class="inline-flex min-w-0 items-center gap-1.5"><Calendar class="size-3.5 shrink-0 text-[var(--event-accent)] sm:size-4" /><span>{{ view.date }}<template v-if="view.time"> · {{ view.time }}</template></span></span>
                     <span v-if="view.location" class="inline-flex min-w-0 items-center gap-1.5"><MapPin class="size-3.5 shrink-0 text-[var(--event-accent)] sm:size-4" /><span class="break-words">{{ view.location }}</span></span>
                 </div>
-                <p v-if="view.subtitle" class="mb-2 max-w-3xl break-words text-sm font-semibold sm:mb-3 sm:text-base lg:text-lg" :class="[view.titlePosition === 'center' ? 'mx-auto' : view.titlePosition === 'right' ? 'ml-auto' : '', view.mobileTitlePosition === 'center' ? 'mobile-subtitle-center' : view.mobileTitlePosition === 'right' ? 'mobile-subtitle-right' : 'mobile-subtitle-left']" :style="{ color: view.subtitleColor, fontFamily: fontFamilyCss(view.subtitleFont), letterSpacing: `${view.subtitleLetterSpacing}px` }">{{ view.subtitle }}</p>
+                <p v-if="view.subtitle" class="mb-2 max-w-3xl break-words text-sm font-semibold sm:mb-3 sm:text-base lg:text-lg" :class="[view.titlePosition === 'center' ? 'mx-auto' : view.titlePosition === 'right' ? 'ml-auto' : '', view.mobileTitlePosition === 'center' ? 'mobile-subtitle-center' : view.mobileTitlePosition === 'right' ? 'mobile-subtitle-right' : 'mobile-subtitle-left']" :style="{ color: view.subtitleColor, fontFamily: fontFamilyCss(view.subtitleFont), letterSpacing: `${view.subtitleLetterSpacing}px`, ...(previewMode === 'desktop' ? { position: 'relative', top: '8px', fontSize: '10px', lineHeight: '28px' } : {}) }">{{ view.subtitle }}</p>
                 <h1 :aria-label="view.title" :style="{ fontSize: titleFontSize, fontFamily: fontFamilyCss(view.titleFont), letterSpacing: `${view.titleLetterSpacing}px` }" class="event-hero__title overflow-hidden font-black leading-[1.02] tracking-tight text-balance">
                     <span class="block break-words" :style="{ color: view.titleFirstColor }">{{ view.titleFirst }}</span>
                     <span class="block break-words" :style="{ color: view.titleSecondColor }">{{ view.titleSecond }}</span>
@@ -226,13 +226,18 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
     align-self: start;
 }
 
+.event-hero--desktop-preview .event-hero__title {
+    position: relative;
+    top: -4px;
+}
+
 .event-hero--desktop-preview .event-hero__heading > div:first-child {
     font-size: 12px;
 }
 
 .event-hero--desktop-preview .event-hero__heading > div:first-child svg {
-    width: 14px;
-    height: 14px;
+    width: 12px !important;
+    height: 12px !important;
 }
 
 .event-hero--desktop-preview .event-hero__lower {
