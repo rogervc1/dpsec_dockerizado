@@ -123,7 +123,7 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
 <template>
     <PublicLayout :title="eventView.title">
         <div class="w-full min-w-0 max-w-full overflow-x-hidden">
-            <EventExclusiveHero :view="view" @navigate="scrollTo" />
+            <EventExclusiveHero :view="view" mobile-header-overlay @navigate="scrollTo" />
             <main class="bg-neutral-50 dark:bg-neutral-950">
                 <section id="documentos" class="scroll-mt-40 border-b border-neutral-200 px-5 py-16 dark:border-neutral-800 sm:px-8 md:py-24">
                     <div class="mx-auto max-w-7xl"><p class="text-xs font-extrabold uppercase tracking-[0.24em] text-[var(--event-strong)] dark:text-[var(--event-accent)]">01 / Recursos</p><h2 class="mt-3 text-3xl font-black tracking-tight text-neutral-900 dark:text-white sm:text-5xl">Documentos</h2>

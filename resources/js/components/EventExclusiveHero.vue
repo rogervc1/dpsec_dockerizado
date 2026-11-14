@@ -6,6 +6,7 @@ import type { ExclusiveEventView } from '@/lib/exclusiveEventView';
 const props = defineProps<{
     view: ExclusiveEventView;
     previewMode?: 'desktop' | 'mobile' | null;
+    mobileHeaderOverlay?: boolean;
 }>();
 const emit = defineEmits<{ navigate: [sectionId: string] }>();
 
@@ -37,15 +38,17 @@ const themeColors: Record<string, { accent: string; soft: string; strong: string
 const themeStyle = computed(() => {
     const color = themeColors[props.view.theme] || themeColors.emerald;
     const accent = props.view.customAccent || color.accent;
+    const desktopOffsetScale = props.previewMode === 'desktop' ? 2 : 1;
+    const mobileOffsetScale = props.previewMode === 'mobile' ? 1.25 : 1;
     return {
         '--event-accent': accent,
         '--event-soft': color.soft,
         '--event-strong': color.strong,
-        '--event-title-offset-x': `${props.view.titleOffsetX}px`,
-        '--event-title-offset-y': `${props.view.titleOffsetY}px`,
+        '--event-title-offset-x': `${props.view.titleOffsetX * desktopOffsetScale}px`,
+        '--event-title-offset-y': `${props.view.titleOffsetY * desktopOffsetScale}px`,
         '--event-mobile-title-size': `${30 * props.view.mobileTitleSizePercent / 100}px`,
-        '--event-mobile-title-offset-x': `${props.view.mobileTitleOffsetX}px`,
-        '--event-mobile-title-offset-y': `${props.view.mobileTitleOffsetY}px`,
+        '--event-mobile-title-offset-x': `${props.view.mobileTitleOffsetX * mobileOffsetScale}px`,
+        '--event-mobile-title-offset-y': `${props.view.mobileTitleOffsetY * mobileOffsetScale}px`,
         '--event-desktop-cover-zoom': String(props.view.desktopCoverZoom),
         '--event-desktop-cover-shift-x': `${(50 - props.view.desktopCoverX) * (props.view.desktopCoverZoom - 1)}%`,
         '--event-desktop-cover-shift-y': `${(50 - props.view.desktopCoverY) * (props.view.desktopCoverZoom - 1)}%`,
@@ -57,8 +60,8 @@ const themeStyle = computed(() => {
     } as Record<string, string>;
 });
 const titleFontSize = computed(() => {
-    if (props.previewMode === 'desktop') return `${76 * props.view.titleSizePercent / 100 * 0.7125}px`;
-    if (props.previewMode === 'mobile') return `${36.375 * props.view.mobileTitleSizePercent / 100}px`;
+    if (props.previewMode === 'desktop') return `${76 * props.view.titleSizePercent / 100 * 0.7125 * 0.95 * 0.95}px`;
+    if (props.previewMode === 'mobile') return `${36.375 * props.view.mobileTitleSizePercent / 100 * 0.95 * 0.95}px`;
     return `${76 * props.view.titleSizePercent / 100}px`;
 });
 
@@ -92,14 +95,35 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
 <template>
     <section
         class="event-hero relative isolate flex items-center overflow-hidden bg-slate-950 text-white"
-        :class="previewMode ? (previewMode === 'mobile' ? 'event-hero--mobile-preview h-[calc(100svh-9rem)] w-[320px] max-w-none flex-none origin-top scale-[0.8]' : 'event-hero--desktop-preview h-[200%] w-[200%] max-w-[2560px] origin-top-left scale-50') : 'min-h-[calc(100svh-9rem)] lg:min-h-[calc(100svh-6rem)]'"
+        :class="[previewMode ? (previewMode === 'mobile' ? 'event-hero--mobile-preview h-[calc(100svh-9rem)] w-[320px] max-w-none flex-none origin-top scale-[0.8]' : 'event-hero--desktop-preview h-[200%] w-[200%] max-w-[2560px] origin-top-left scale-50') : 'min-h-[calc(100svh-9rem)] lg:min-h-[calc(100svh-6rem)]', { 'event-hero--mobile-header-overlay': mobileHeaderOverlay && !previewMode }]"
         :style="themeStyle"
     >
         <img v-if="view.image" :src="view.image" :alt="view.title" class="event-hero__background absolute inset-0 -z-20 size-full object-cover" />
         <div class="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/30" />
         <div class="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/20" />
 
-        <a v-if="previewMode" href="#" @click.prevent class="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/30 px-2.5 py-1.5 text-[9px] font-bold text-white/85 backdrop-blur sm:right-5 sm:top-5 sm:text-[10px]">
+        <div v-if="previewMode" class="event-hero__preview-navbar absolute inset-x-0 top-0 z-10 h-24 bg-black text-white">
+            <div class="mx-auto flex h-full max-w-7xl items-center justify-between gap-5 px-4 sm:px-6 lg:px-8">
+                <div class="flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:justify-start sm:gap-3">
+                    <img src="/images/unap-logo.png" alt="Logo UNA Puno" class="h-10 w-auto shrink-0 object-contain sm:h-12" />
+                    <div class="flex min-w-0 flex-col items-center text-center text-[9px] font-black leading-tight sm:text-xs lg:text-sm">
+                        <span>Dirección de Proyección Social y</span>
+                        <span>Extensión Cultural</span>
+                    </div>
+                    <img src="/images/dpsec-logo-20261113.png" alt="Logo DPSEC" class="h-10 w-auto shrink-0 rounded-full object-contain sm:h-12" />
+                </div>
+                <nav v-if="previewMode === 'desktop'" class="hidden shrink-0 items-center gap-4 text-xs font-medium text-white/85 lg:flex xl:gap-5" aria-label="Navegación principal">
+                    <span>Inicio</span>
+                    <span>Nosotros</span>
+                    <span>Sub Unidades</span>
+                    <span>Documentos</span>
+                    <span>Eventos</span>
+                    <span>Certificados</span>
+                </nav>
+            </div>
+        </div>
+
+        <a v-if="previewMode" href="#" @click.prevent :class="['absolute right-3 z-20 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/30 px-2.5 py-1.5 text-[9px] font-bold text-white/85 backdrop-blur sm:right-5 sm:text-[10px]', previewMode === 'mobile' ? 'top-[116px]' : 'top-[124px]']">
             <ArrowLeft class="size-3" /> Volver a eventos
         </a>
         <a v-else href="/eventos" class="absolute right-5 top-5 z-10 inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/30 px-4 py-2.5 text-xs font-bold text-white/85 shadow-lg backdrop-blur transition hover:bg-black/50 hover:text-white sm:right-8 sm:top-7 sm:text-sm">
@@ -152,6 +176,24 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
 </template>
 
 <style scoped>
+@media (max-width: 1023px) {
+    .event-hero--mobile-header-overlay {
+        margin-top: -7.75rem;
+        min-height: calc(100svh - 1.25rem) !important;
+    }
+
+    .event-hero--mobile-header-overlay .event-hero__content {
+        min-height: calc(100svh - 1.25rem) !important;
+        padding-top: 11.25rem !important;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+    .event-hero--mobile-header-overlay .event-hero__content {
+        padding-top: 13.75rem !important;
+    }
+}
+
 .event-hero__background {
     object-position: center;
     transform: translate(var(--event-desktop-cover-shift-x), var(--event-desktop-cover-shift-y)) scale(var(--event-desktop-cover-zoom));
@@ -178,6 +220,8 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
 }
 
 .event-hero--desktop-preview .event-hero__heading {
+    width: 90%;
+    margin-inline: auto;
     min-height: 0;
     align-self: start;
 }
@@ -550,6 +594,14 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
 .event-hero--mobile-preview .event-hero__lower > div:last-child {
     transform: scaleX(0.9);
     transform-origin: center;
+}
+
+.event-hero--desktop-preview .event-hero__content {
+    padding-top: 9.5rem;
+}
+
+.event-hero--mobile-preview .event-hero__content {
+    padding-top: 9.5rem;
 }
 
 </style>

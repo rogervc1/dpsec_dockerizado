@@ -1034,8 +1034,9 @@ const getExclusiveTitleSnapDelta = (device: ExclusiveViewDevice) => {
 const snapExclusiveTitleToAlignment = (device: ExclusiveViewDevice, previousDelta: number | null = null) => {
     requestAnimationFrame(() => {
         const measured = getExclusiveTitleSnapDelta(device);
-        if (!measured || Math.abs(measured.delta) > 10) return;
-        if (previousDelta !== null && (Math.abs(previousDelta) <= 10 || Math.abs(measured.delta) >= Math.abs(previousDelta))) return;
+        // Keep the magnetic area subtle; snapping is only attempted during an active drag.
+        if (!measured || Math.abs(measured.delta) > 5) return;
+        if (previousDelta !== null && (Math.abs(previousDelta) <= 5 || Math.abs(measured.delta) >= Math.abs(previousDelta))) return;
         const xKey = device === 'desktop' ? 'title_offset_x' : 'mobile_title_offset_x';
         performExclusiveViewEdit(device, () => {
             exclusivePageForm.settings[xKey] = Math.min(120, Math.max(-120, Math.round(exclusivePageForm.settings[xKey] + measured.rawDelta)));
@@ -1051,14 +1052,12 @@ const moveExclusiveTitle = (device: ExclusiveViewDevice, direction: 'left' | 'ri
     const xKey = device === 'desktop' ? 'title_offset_x' : 'mobile_title_offset_x';
     const yKey = device === 'desktop' ? 'title_offset_y' : 'mobile_title_offset_y';
     const maxY = device === 'desktop' ? 40 : 224;
-    const previousDelta = direction === 'left' || direction === 'right' ? getExclusiveTitleSnapDelta(device)?.delta ?? null : null;
     performExclusiveViewEdit(device, () => {
         if (direction === 'left') settings[xKey] = Math.max(-120, settings[xKey] - 8);
         if (direction === 'right') settings[xKey] = Math.min(120, settings[xKey] + 8);
         if (direction === 'up') settings[yKey] = Math.max(-120, settings[yKey] - 8);
         if (direction === 'down') settings[yKey] = Math.min(maxY, settings[yKey] + 8);
     });
-    if (direction === 'left' || direction === 'right') snapExclusiveTitleToAlignment(device, previousDelta);
 };
 const moveExclusiveCover = (device: 'desktop' | 'mobile', direction: 'left' | 'right' | 'up' | 'down') => {
     const xKey = device === 'desktop' ? 'desktop_cover_x' : 'mobile_cover_x';
@@ -1108,10 +1107,12 @@ const moveExclusiveCoverDrag = (event: PointerEvent) => {
             const maxY = drag.device === 'desktop' ? 40 : 224;
             const deltaX = event.clientX - drag.x;
             const deltaY = event.clientY - drag.y;
+            const previousSnapDelta = getExclusiveTitleSnapDelta(drag.device)?.delta ?? null;
             performExclusiveViewEdit(drag.device, () => {
                 exclusivePageForm.settings[xKey] = Math.min(120, Math.max(-120, Math.round(exclusivePageForm.settings[xKey] + deltaX * scale)));
                 exclusivePageForm.settings[yKey] = Math.min(maxY, Math.max(-120, Math.round(exclusivePageForm.settings[yKey] + deltaY * scale)));
             });
+            snapExclusiveTitleToAlignment(drag.device, previousSnapDelta);
             drag.x = event.clientX;
             drag.y = event.clientY;
             return;
@@ -1134,9 +1135,7 @@ const moveExclusiveCoverDrag = (event: PointerEvent) => {
 const endExclusiveCoverHold = (event: PointerEvent) => {
     if (coverHoldStart?.pointerId === event.pointerId) coverHoldStart = null;
     if (coverDragSession?.pointerId === event.pointerId) {
-        const drag = coverDragSession;
         coverDragSession = null;
-        if (drag.kind === 'title') snapExclusiveTitleToAlignment(drag.device);
     }
 };
 const exclusivePreviewView = computed(() => {
