@@ -61,13 +61,13 @@ const suboffices = [
     }
 ];
 
-const defaultLogo = 'https://cdn.phototourl.com/free/2026-07-31-f705bacb-02f5-4ea3-aeed-7e4e724a1d9b.png';
+const defaultLogo = '/images/dpsec-logo-20261113.png';
 
 const subunitsFloating = [
     {
         name: 'Proyección Social y Extensión Universitaria',
         fbUrl: 'https://www.facebook.com/p/Direcci%C3%B3n-de-Proyecci%C3%B3n-Social-y-Extensi%C3%B3n-Cultural-UNA-Puno-100071137256988/',
-        logo: 'https://cdn.phototourl.com/free/2026-07-31-f705bacb-02f5-4ea3-aeed-7e4e724a1d9b.png'
+        logo: '/images/dpsec-logo-20261113.png'
     },
     {
         name: 'Gestión Ambiental',
@@ -136,7 +136,7 @@ const handleImageError = (e: Event) => {
                 <div class="flex-1 flex justify-center lg:justify-start lg:flex-initial my-auto px-0 sm:px-1">
                     <Link href="/" class="flex items-center gap-1.5 sm:gap-3 group shrink-0 my-auto">
                         <!-- Left Logo (UNAP - Enlarge on Mobile) -->
-                        <img src="https://cdn.phototourl.com/free/2026-07-10-ea6ee316-4c97-416a-a4f4-52a5621cd3b2.png"
+                        <img src="/images/unap-logo.png"
                             alt="Logo UNA Puno"
                             class="h-10 sm:h-13 md:h-12 w-auto object-contain shrink-0 transition-transform duration-300 group-hover:scale-105" />
 
@@ -154,7 +154,7 @@ const handleImageError = (e: Event) => {
                         </div>
 
                         <!-- Right Logo (DPESEC - Enlarge on Mobile) -->
-                        <img src="https://cdn.phototourl.com/free/2026-07-31-f705bacb-02f5-4ea3-aeed-7e4e724a1d9b.png"
+                        <img src="/images/dpsec-logo-20261113.png"
                             alt="Logo DPSEC"
                             class="h-10 sm:h-13 md:h-12 w-auto object-contain rounded-full border border-neutral-200/50 dark:border-neutral-800/50 shrink-0 transition-transform duration-300 group-hover:scale-105" />
                     </Link>
@@ -367,8 +367,8 @@ const handleImageError = (e: Event) => {
                 <div class="space-y-4">
                     <div class="flex items-center gap-2.5">
                         <div class="size-12 rounded-lg  flex items-center justify-center text-white shadow-md">
-                            <img src="https://cdn.phototourl.com/free/2026-07-10-ea6ee316-4c97-416a-a4f4-52a5621cd3b2.png"
-                                alt="Description" class="size-12" />
+                            <img src="/images/dpsec-logo-20261113.png"
+                                alt="Logo DPSEC" class="size-12 object-contain" />
                         </div>
 
                         <div class="flex flex-col">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { ArrowLeft, Calendar, FileText, MapPin, Trophy, UserCheck, Users } from '@lucide/vue';
 import type { ExclusiveEventView } from '@/lib/exclusiveEventView';
 
@@ -11,6 +11,21 @@ const emit = defineEmits<{ navigate: [sectionId: string] }>();
 
 const now = ref(Date.now());
 let countdownInterval: ReturnType<typeof setInterval> | undefined;
+const loadedCustomFaces = new Map<string, { url: string; face: FontFace }>();
+const fontFamilyCss = (name: string) => `${name.includes(' ') ? `'${name}'` : name}, sans-serif`;
+watch(() => props.view.customFonts, (fonts) => {
+    if (typeof document === 'undefined' || typeof FontFace === 'undefined') return;
+    fonts.forEach(({ name, url }) => {
+        if (!url || loadedCustomFaces.get(name)?.url === url) return;
+        const face = new FontFace(name, `url("${url}")`);
+        face.load().then((loadedFace) => {
+            const previous = loadedCustomFaces.get(name)?.face;
+            if (previous) document.fonts.delete(previous);
+            document.fonts.add(loadedFace);
+            loadedCustomFaces.set(name, { url, face: loadedFace });
+        }).catch(() => undefined);
+    });
+}, { deep: true, immediate: true });
 
 const themeColors: Record<string, { accent: string; soft: string; strong: string }> = {
     emerald: { accent: '#34d399', soft: '#a7f3d0', strong: '#047857' },
@@ -26,11 +41,9 @@ const themeStyle = computed(() => {
         '--event-accent': accent,
         '--event-soft': color.soft,
         '--event-strong': color.strong,
-        '--event-title-size': `${props.view.titleSize}px`,
-        '--event-title-max-chars': String(props.view.titleMaxChars),
         '--event-title-offset-x': `${props.view.titleOffsetX}px`,
         '--event-title-offset-y': `${props.view.titleOffsetY}px`,
-        '--event-mobile-title-size': `${props.view.mobileTitleSize}px`,
+        '--event-mobile-title-size': `${30 * props.view.mobileTitleSizePercent / 100}px`,
         '--event-mobile-title-offset-x': `${props.view.mobileTitleOffsetX}px`,
         '--event-mobile-title-offset-y': `${props.view.mobileTitleOffsetY}px`,
         '--event-desktop-cover-zoom': String(props.view.desktopCoverZoom),
@@ -44,9 +57,9 @@ const themeStyle = computed(() => {
     } as Record<string, string>;
 });
 const titleFontSize = computed(() => {
-    if (props.previewMode === 'desktop') return `${props.view.titleSize * 0.7125}px`;
-    if (props.previewMode === 'mobile') return `min(var(--event-mobile-title-size), calc(250cqw / ${props.view.titleMaxChars}))`;
-    return 'var(--event-title-size)';
+    if (props.previewMode === 'desktop') return `${76 * props.view.titleSizePercent / 100 * 0.7125}px`;
+    if (props.previewMode === 'mobile') return `${36.375 * props.view.mobileTitleSizePercent / 100}px`;
+    return `${76 * props.view.titleSizePercent / 100}px`;
 });
 
 const countdown = computed(() => {
@@ -102,10 +115,10 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
                     <span class="inline-flex min-w-0 items-center gap-1.5"><Calendar class="size-3.5 shrink-0 text-[var(--event-accent)] sm:size-4" /><span>{{ view.date }}<template v-if="view.time"> · {{ view.time }}</template></span></span>
                     <span v-if="view.location" class="inline-flex min-w-0 items-center gap-1.5"><MapPin class="size-3.5 shrink-0 text-[var(--event-accent)] sm:size-4" /><span class="break-words">{{ view.location }}</span></span>
                 </div>
-                <p v-if="view.subtitle" class="mb-2 max-w-3xl break-words text-sm font-semibold sm:mb-3 sm:text-base lg:text-lg" :class="[view.titlePosition === 'center' ? 'mx-auto' : view.titlePosition === 'right' ? 'ml-auto' : '', view.mobileTitlePosition === 'center' ? 'mobile-subtitle-center' : view.mobileTitlePosition === 'right' ? 'mobile-subtitle-right' : 'mobile-subtitle-left']" :style="{ color: view.subtitleColor }">{{ view.subtitle }}</p>
-                <h1 :aria-label="view.title" :style="{ fontSize: titleFontSize }" class="event-hero__title overflow-hidden font-black leading-[1.02] tracking-tight text-balance">
-                    <span class="block break-words text-white">{{ view.titleFirst }}</span>
-                    <span class="block break-words text-[var(--event-accent)]">{{ view.titleSecond }}</span>
+                <p v-if="view.subtitle" class="mb-2 max-w-3xl break-words text-sm font-semibold sm:mb-3 sm:text-base lg:text-lg" :class="[view.titlePosition === 'center' ? 'mx-auto' : view.titlePosition === 'right' ? 'ml-auto' : '', view.mobileTitlePosition === 'center' ? 'mobile-subtitle-center' : view.mobileTitlePosition === 'right' ? 'mobile-subtitle-right' : 'mobile-subtitle-left']" :style="{ color: view.subtitleColor, fontFamily: fontFamilyCss(view.subtitleFont), letterSpacing: `${view.subtitleLetterSpacing}px` }">{{ view.subtitle }}</p>
+                <h1 :aria-label="view.title" :style="{ fontSize: titleFontSize, fontFamily: fontFamilyCss(view.titleFont), letterSpacing: `${view.titleLetterSpacing}px` }" class="event-hero__title overflow-hidden font-black leading-[1.02] tracking-tight text-balance">
+                    <span class="block break-words" :style="{ color: view.titleFirstColor }">{{ view.titleFirst }}</span>
+                    <span class="block break-words" :style="{ color: view.titleSecondColor }">{{ view.titleSecond }}</span>
                 </h1>
             </div>
 
@@ -200,13 +213,16 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
     .event-hero__heading.mobile-title-right { text-align: right; }
     .mobile-meta-center { justify-content: center; }
     .mobile-meta-right { justify-content: flex-end; }
+    .event-hero__heading.mobile-title-left > .mobile-meta-left { align-items: flex-start; }
+    .event-hero__heading.mobile-title-center > .mobile-meta-center { align-items: center; }
+    .event-hero__heading.mobile-title-right > .mobile-meta-right { align-items: flex-end; }
     .event-hero__heading > .mobile-subtitle-center { margin-right: auto; margin-left: auto; }
     .event-hero__heading > .mobile-subtitle-right { margin-right: 0; margin-left: auto; }
 }
 
 @media (max-width: 639px) {
     .event-hero:not(.event-hero--mobile-preview) .event-hero__title {
-        font-size: min(var(--event-mobile-title-size), calc(250cqw / var(--event-title-max-chars))) !important;
+        font-size: var(--event-mobile-title-size) !important;
     }
 
     .event-hero:not(.event-hero--mobile-preview) .event-hero__content {
@@ -245,6 +261,10 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
     .event-hero:not(.event-hero--mobile-preview) .event-hero__heading.text-right > div:first-child {
         align-items: flex-end;
     }
+
+    .event-hero:not(.event-hero--mobile-preview) .event-hero__heading.mobile-title-left > .mobile-meta-left { align-items: flex-start; }
+    .event-hero:not(.event-hero--mobile-preview) .event-hero__heading.mobile-title-center > .mobile-meta-center { align-items: center; }
+    .event-hero:not(.event-hero--mobile-preview) .event-hero__heading.mobile-title-right > .mobile-meta-right { align-items: flex-end; }
 
     .event-hero:not(.event-hero--mobile-preview) .event-hero__heading > h1 + p {
         display: -webkit-box;
@@ -346,6 +366,9 @@ onUnmounted(() => { if (countdownInterval) clearInterval(countdownInterval); });
 .event-hero--mobile-preview .event-hero__heading.mobile-title-right { text-align: right; }
 .event-hero--mobile-preview .mobile-meta-center { justify-content: center; }
 .event-hero--mobile-preview .mobile-meta-right { justify-content: flex-end; }
+.event-hero--mobile-preview .event-hero__heading.mobile-title-left > .mobile-meta-left { align-items: flex-start; }
+.event-hero--mobile-preview .event-hero__heading.mobile-title-center > .mobile-meta-center { align-items: center; }
+.event-hero--mobile-preview .event-hero__heading.mobile-title-right > .mobile-meta-right { align-items: flex-end; }
 .event-hero--mobile-preview .event-hero__heading > .mobile-subtitle-center { margin-right: auto; margin-left: auto; }
 .event-hero--mobile-preview .event-hero__heading > .mobile-subtitle-right { margin-right: 0; margin-left: auto; }
 

@@ -15,7 +15,7 @@ class SubUnitSeeder extends Seeder
                 'description' => 'Coordinación de actividades comunitarias y extensión de la universidad.',
                 'href' => '/proyeccion-social',
                 'is_external' => false,
-                'logo_path' => 'https://cdn.phototourl.com/free/2026-07-31-f705bacb-02f5-4ea3-aeed-7e4e724a1d9b.png',
+                'logo_path' => '/images/dpsec-logo-20261113.png',
                 'fb_url' => 'https://www.facebook.com/p/Direcci%C3%B3n-de-Proyecci%C3%B3n-Social-y-Extensi%C3%B3n-Cultural-UNA-Puno-100071137256988/',
                 'sort_order' => 1,
                 'is_active' => true

@@ -253,6 +253,39 @@ class AdminEventController extends Controller
             'sections.*.link' => 'nullable|url|max:1000',
             'settings' => 'required|array',
             'settings.title' => 'required|string|max:255',
+            'settings.title_first' => 'required|string|max:255',
+            'settings.title_second' => 'nullable|string|max:255',
+            'settings.title_first_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'settings.title_first_use_theme' => 'required|boolean',
+            'settings.title_second_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'settings.title_second_use_theme' => 'required|boolean',
+            'settings.title_font' => ['required', 'string', 'max:80', 'regex:/^[A-Za-z0-9 _-]+$/'],
+            'settings.subtitle_font' => ['required', 'string', 'max:80', 'regex:/^[A-Za-z0-9 _-]+$/'],
+            'settings.title_letter_spacing' => 'required|numeric|min:-2|max:20',
+            'settings.subtitle_letter_spacing' => 'required|numeric|min:-2|max:20',
+            'settings.custom_fonts' => 'nullable|array|max:30',
+            'settings.custom_fonts.*.name' => ['required', 'string', 'max:80', 'regex:/^[A-Za-z0-9 _-]+$/'],
+            'settings.custom_fonts.*.url' => 'nullable|string|max:1000',
+            'settings.custom_fonts.*.font_file' => [
+                'nullable',
+                'file',
+                'max:4096',
+                function ($attribute, $value, $fail) {
+                    if (!$value instanceof \Illuminate\Http\UploadedFile || !$value->isValid()) return;
+                    $extension = strtolower($value->getClientOriginalExtension());
+                    $signature = @file_get_contents($value->getRealPath(), false, null, 0, 4);
+                    $validSignatures = [
+                        'woff' => ['wOFF'],
+                        'woff2' => ['wOF2'],
+                        'ttf' => ["\x00\x01\x00\x00", 'true', 'typ1'],
+                        'otf' => ['OTTO', "\x00\x01\x00\x00"],
+                    ];
+                    if (!in_array($extension, array_keys($validSignatures), true)
+                        || !in_array($signature, $validSignatures[$extension] ?? [], true)) {
+                        $fail('El archivo debe ser una fuente OTF, TTF, WOFF o WOFF2 válida.');
+                    }
+                },
+            ],
             'settings.subtitle' => 'nullable|string|max:255',
             'settings.subtitle_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'settings.subtitle_use_theme' => 'required|boolean',
@@ -264,10 +297,12 @@ class AdminEventController extends Controller
             'settings.theme_custom_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'settings.title_position' => 'required|in:left,center,right',
             'settings.title_size' => 'required|integer|min:32|max:112',
+            'settings.title_size_percent' => 'required|integer|min:50|max:150',
             'settings.title_offset_x' => 'required|integer|min:-120|max:120',
             'settings.title_offset_y' => 'required|integer|min:-120|max:40',
             'settings.mobile_title_position' => 'required|in:left,center,right',
             'settings.mobile_title_size' => 'required|integer|min:32|max:112',
+            'settings.mobile_title_size_percent' => 'required|integer|min:50|max:150',
             'settings.mobile_title_offset_x' => 'required|integer|min:-120|max:120',
             'settings.mobile_title_offset_y' => 'required|integer|min:-120|max:224',
             'settings.config_linked' => 'required|boolean',
@@ -377,11 +412,24 @@ class AdminEventController extends Controller
         unset($section);
 
         $settings = $validated['settings'];
+        $settings['title_second'] = $validated['settings']['title_second'] ?? '';
+        $settings['title_first_use_theme'] = $request->boolean('settings.title_first_use_theme');
+        $settings['title_second_use_theme'] = $request->boolean('settings.title_second_use_theme');
         $settings['subtitle_use_theme'] = $request->boolean('settings.subtitle_use_theme');
         $settings['config_linked'] = $request->boolean('settings.config_linked');
         unset($settings['desktop_config_linked'], $settings['mobile_config_linked']);
         unset($settings['desktop_cover_file']);
         $previousSettings = $event->exclusive_page_settings ?? [];
+        $customFonts = $settings['custom_fonts'] ?? [];
+        foreach ($customFonts as $index => &$font) {
+            if ($request->hasFile("settings.custom_fonts.{$index}.font_file")) {
+                $fontPath = $request->file("settings.custom_fonts.{$index}.font_file")->store('events/exclusive/fonts', 'public');
+                $font['url'] = Storage::url($fontPath);
+            }
+            unset($font['font_file'], $font['preview_url']);
+        }
+        unset($font);
+        $settings['custom_fonts'] = $customFonts;
         $defaultCover = $event->cover_image_path ?? $event->image_path;
         $previousDesktopCover = $previousSettings['desktop_cover'] ?? $defaultCover;
         $settings['desktop_cover'] = $previousDesktopCover;

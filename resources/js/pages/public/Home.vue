@@ -172,7 +172,9 @@ const subunitsFloating = computed(() => {
         return props.subUnits.map(s => ({
             name: s.name,
             fbUrl: s.fb_url || s.href,
-            logo: s.logo_path ? (s.logo_path.startsWith('http') ? s.logo_path : '/storage/' + s.logo_path) : 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=100&h=100&fit=crop'
+            logo: s.name?.toLowerCase().includes('proyección social')
+                ? '/images/dpsec-logo-20261113.png'
+                : s.logo_path ? (s.logo_path.startsWith('http') ? s.logo_path : '/storage/' + s.logo_path) : 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=100&h=100&fit=crop'
         }));
     }
 
@@ -180,7 +182,7 @@ const subunitsFloating = computed(() => {
         {
             name: 'Proyección Social y Extensión Universitaria',
             fbUrl: 'https://www.facebook.com/p/Direcci%C3%B3n-de-Proyecci%C3%B3n-Social-y-Extensi%C3%B3n-Cultural-UNA-Puno-100071137256988/',
-            logo: 'https://cdn.phototourl.com/free/2026-07-31-f705bacb-02f5-4ea3-aeed-7e4e724a1d9b.png'
+            logo: '/images/dpsec-logo-20261113.png'
         },
         {
             name: 'Gestión Ambiental',
