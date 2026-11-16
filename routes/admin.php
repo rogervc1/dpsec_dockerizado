@@ -20,6 +20,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::post('/eventos/{event}/pagina-exclusiva/documentos', [AdminEventExclusiveDocumentController::class, 'store'])->name('eventos.exclusive-page.documents.store');
     Route::put('/eventos/{event}/pagina-exclusiva/documentos/{document}', [AdminEventExclusiveDocumentController::class, 'update'])->name('eventos.exclusive-page.documents.update');
     Route::delete('/eventos/{event}/pagina-exclusiva/documentos/{document}', [AdminEventExclusiveDocumentController::class, 'destroy'])->name('eventos.exclusive-page.documents.destroy');
+    Route::get('/eventos/{event}/pagina-exclusiva/documentos/{document}/archivo', [AdminEventExclusiveDocumentController::class, 'preview'])->name('eventos.exclusive-page.documents.preview');
+    Route::get('/eventos/{event}/pagina-exclusiva/documentos/{document}/descargar', [AdminEventExclusiveDocumentController::class, 'download'])->name('eventos.exclusive-page.documents.download');
     Route::get('/eventos/{event}/pagina-exclusiva/registro/estadisticas', [AdminEventRegistrationController::class, 'index'])->name('eventos.exclusive-page.registration.stats');
     Route::put('/eventos/{event}/pagina-exclusiva/registro', [AdminEventRegistrationController::class, 'save'])->name('eventos.exclusive-page.registration.save');
     Route::get('/eventos/{event}/pagina-exclusiva/registro/{submission}/archivos/{fieldId}', [AdminEventRegistrationController::class, 'download'])->name('eventos.exclusive-page.registration.attachments');

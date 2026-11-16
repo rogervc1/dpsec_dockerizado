@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, Download, ExternalLink, FileText, Minus, Plus, Trophy, UserCheck, X } from '@lucide/vue';
+import { Check, Download, ExternalLink, Eye, FileText, Minus, Plus, Trophy, UserCheck, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import EventExclusiveHero from '@/components/EventExclusiveHero.vue';
 import EventScheduleTimeline from '@/components/EventScheduleTimeline.vue';
@@ -106,11 +106,27 @@ const canPreviewDocument = computed(() => !!selectedDocument.value && (selectedD
 const previewUrl = computed(() => selectedDocument.value ? `${selectedDocument.value.preview_url}#toolbar=1&navpanes=0&zoom=${documentZoom.value}` : '');
 const openDocument = (document: PublicEventDocument) => { selectedDocument.value = document; documentZoom.value = 100; };
 const closeDocument = () => { selectedDocument.value = null; };
-const formatDocumentSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    const units = ['KB', 'MB', 'GB']; let value = bytes / 1024; let unit = 0;
-    while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit += 1; }
-    return `${value.toFixed(1)} ${units[unit]}`;
+const getDocumentFormat = (document: PublicEventDocument) => {
+    const extension = document.original_name.split('.').pop()?.toLowerCase() || '';
+    const formats: Record<string, { label: string; style: string }> = {
+        pdf: { label: 'PDF', style: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300' },
+        doc: { label: 'DOC', style: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300' },
+        docx: { label: 'DOCX', style: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300' },
+        odt: { label: 'ODT', style: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300' },
+        xls: { label: 'XLS', style: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300' },
+        xlsx: { label: 'XLSX', style: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300' },
+        ods: { label: 'ODS', style: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300' },
+        csv: { label: 'CSV', style: 'border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950 dark:text-teal-300' },
+        ppt: { label: 'PPT', style: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-300' },
+        pptx: { label: 'PPTX', style: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-300' },
+        odp: { label: 'ODP', style: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-300' },
+        jpg: { label: 'JPG', style: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-300' },
+        jpeg: { label: 'JPG', style: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-300' },
+        png: { label: 'PNG', style: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-300' },
+        webp: { label: 'WEBP', style: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-300' },
+        txt: { label: 'TXT', style: 'border-neutral-200 bg-neutral-50 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300' },
+    };
+    return formats[extension] || { label: extension.slice(0, 5).toUpperCase() || 'FILE', style: 'border-neutral-200 bg-neutral-50 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300' };
 };
 const eventView = computed(() => ({
     ...props.event, ...view.value, registrationLink: props.event.registration_link, fbLink: props.event.fb_link,
@@ -127,7 +143,13 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
             <main class="bg-neutral-50 dark:bg-neutral-950">
                 <section id="documentos" class="scroll-mt-40 border-b border-neutral-200 px-5 py-16 dark:border-neutral-800 sm:px-8 md:py-24">
                     <div class="mx-auto max-w-7xl"><p class="text-xs font-extrabold uppercase tracking-[0.24em] text-[var(--event-strong)] dark:text-[var(--event-accent)]">01 / Recursos</p><h2 class="mt-3 text-3xl font-black tracking-tight text-neutral-900 dark:text-white sm:text-5xl">Documentos</h2>
-                        <div v-if="documents.length" class="mt-8 grid gap-3 md:grid-cols-2"><article v-for="document in documents" :key="document.id" class="flex min-w-0 items-start gap-4 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"><span class="grid size-12 shrink-0 place-items-center rounded-xl" :style="{ backgroundColor: 'color-mix(in srgb, var(--event-accent) 18%, transparent)', color: 'var(--event-accent)' }"><FileText class="size-5" /></span><div class="min-w-0 flex-1"><h3 class="break-words font-bold text-neutral-900 dark:text-white">{{ document.title }}</h3><p v-if="document.description" class="mt-1 whitespace-pre-line text-sm text-neutral-500 dark:text-neutral-400">{{ document.description }}</p><p class="mt-2 truncate text-xs text-neutral-400">{{ document.original_name }} · {{ formatDocumentSize(document.size_bytes) }}<span v-if="document.uploaded_at"> · {{ new Date(document.uploaded_at).toLocaleDateString() }}</span></p></div><button type="button" @click="openDocument(document)" class="inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-extrabold text-white" :style="{ backgroundColor: 'var(--event-strong)' }">Ver <ExternalLink class="size-3.5" /></button></article></div>
+                        <div v-if="documents.length" class="mt-8 flex flex-col gap-3">
+                            <article v-for="document in documents" :key="document.id" class="group relative flex min-w-0 items-center gap-3 rounded-2xl border border-neutral-300 bg-white p-3 shadow-md shadow-neutral-200/80 ring-1 ring-neutral-900/[0.025] transition-all duration-300 hover:border-[var(--event-accent)]/60 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/30 dark:ring-white/[0.04] sm:gap-4 sm:p-4">
+                                <span class="grid size-12 shrink-0 place-items-center gap-0.5 rounded-xl border sm:size-14" :class="getDocumentFormat(document).style"><FileText class="size-5" /><span class="max-w-full truncate px-1 text-[8px] font-black leading-none">{{ getDocumentFormat(document).label }}</span></span>
+                                <div class="min-w-0 flex-1"><h3 class="truncate font-bold text-neutral-900 dark:text-white" :title="document.title">{{ document.title }}</h3><p v-if="document.description" class="max-h-0 overflow-y-auto whitespace-pre-line break-words text-sm leading-5 text-neutral-600 opacity-0 transition-[max-height,opacity,padding] duration-300 group-hover:max-h-[40vh] group-hover:pt-2 group-hover:opacity-100 group-focus-within:max-h-[40vh] group-focus-within:pt-2 group-focus-within:opacity-100 dark:text-neutral-300">{{ document.description }}</p></div>
+                                <button type="button" @click="openDocument(document)" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-slate-950 bg-slate-900 px-4 py-2.5 text-xs font-extrabold text-white shadow-md shadow-slate-900/20 transition-all hover:-translate-y-0.5 hover:border-slate-800 hover:bg-slate-800 hover:shadow-lg active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--event-accent)] focus-visible:ring-offset-2 dark:border-white/15 dark:bg-slate-100 dark:text-slate-950 dark:shadow-black/30 dark:hover:border-white/25 dark:hover:bg-white"><Eye class="size-4" />Ver</button>
+                            </article>
+                        </div>
                         <div v-else class="mt-8 rounded-3xl border border-dashed border-neutral-300 bg-white p-8 text-center dark:border-neutral-700 dark:bg-neutral-900"><FileText class="mx-auto size-8 text-neutral-400" /><p class="mt-3 text-sm text-neutral-500">Aún no hay documentos publicados para este evento.</p></div>
                         <a v-if="eventView.exclusiveSections.documentos?.link" :href="eventView.exclusiveSections.documentos.link" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--event-strong)] hover:underline dark:text-[var(--event-accent)]">Abrir recurso relacionado <ExternalLink class="size-4" /></a>
                     </div>

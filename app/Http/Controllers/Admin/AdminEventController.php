@@ -201,6 +201,7 @@ class AdminEventController extends Controller
             'sections.cronograma.activities.*.description' => 'nullable|string|max:3000',
             'sections.cronograma.activities.*.date' => 'required|date_format:Y-m-d',
             'sections.cronograma.activities.*.time' => 'nullable|date_format:H:i',
+            'sections.cronograma.activities.*.important' => 'nullable|boolean',
             'sections.participantes' => 'required|array',
             'sections.participantes.forms' => 'nullable|array|max:30',
             'sections.participantes.forms.*.id' => 'required|string|regex:/^[a-zA-Z0-9_-]+$/|max:64',

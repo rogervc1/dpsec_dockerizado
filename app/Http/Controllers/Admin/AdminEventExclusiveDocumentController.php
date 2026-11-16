@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class AdminEventExclusiveDocumentController extends Controller
 {
@@ -88,6 +89,36 @@ class AdminEventExclusiveDocumentController extends Controller
         $document->delete();
 
         return back()->with('success', 'Documento eliminado.');
+    }
+
+    public function preview(Event $event, EventExclusiveDocument $document): Response
+    {
+        abort_unless($document->event_id === $event->id, 404);
+
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($document->file_path), 404);
+
+        return response()->file($disk->path($document->file_path), [
+            'Content-Type' => $document->mime_type ?: 'application/octet-stream',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
+    public function download(Event $event, EventExclusiveDocument $document): Response
+    {
+        abort_unless($document->event_id === $event->id, 404);
+
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($document->file_path), 404);
+        $extension = pathinfo($document->original_name, PATHINFO_EXTENSION);
+        $filename = Str::slug(pathinfo($document->title, PATHINFO_FILENAME)) ?: 'documento';
+        if ($extension !== '') $filename .= '.'.strtolower($extension);
+
+        return $disk->download($document->file_path, $filename, [
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     private function safeOriginalName(string $name): string
