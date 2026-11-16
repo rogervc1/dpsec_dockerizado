@@ -45,7 +45,7 @@ onBeforeUnmount(() => {
 });
 const isMobileLayout = computed(() => width.value < 640);
 const columns = computed(() => width.value >= 900 ? 7 : 3);
-const rowGap = computed(() => isMobileLayout.value ? 225 : 250);
+const rowGap = computed(() => isMobileLayout.value ? 225 : 320);
 const cardWidth = computed(() => isMobileLayout.value
     ? Math.min(150, Math.max(84, width.value / 2 - 48))
     : Math.min(190, Math.max(100, width.value / columns.value - 16)));
