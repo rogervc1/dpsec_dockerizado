@@ -133,7 +133,14 @@ const eventView = computed(() => ({
     exclusiveSections: props.event.exclusive_page_content || {},
     mapLink: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(view.value.location)}`,
 }));
-const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const scrollTo = (id: string) => {
+    const section = document.getElementById(id);
+    if (!section) return;
+    const stickyHeader = document.querySelector<HTMLElement>('.sticky.top-0');
+    const headerHeight = stickyHeader?.getBoundingClientRect().height || 0;
+    const top = section.getBoundingClientRect().top + window.scrollY - headerHeight;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+};
 </script>
 
 <template>
@@ -154,15 +161,15 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
                         <a v-if="eventView.exclusiveSections.documentos?.link" :href="eventView.exclusiveSections.documentos.link" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--event-strong)] hover:underline dark:text-[var(--event-accent)]">Abrir recurso relacionado <ExternalLink class="size-4" /></a>
                     </div>
                 </section>
-                <section id="cronograma" class="scroll-mt-40 border-b border-neutral-200 bg-white px-5 py-16 dark:border-neutral-800 dark:bg-neutral-900/40 sm:px-8 md:py-24"><div class="mx-auto max-w-7xl"><p class="text-xs font-extrabold uppercase tracking-[0.24em] text-[var(--event-strong)] dark:text-[var(--event-accent)]">02 / Agenda</p><h2 class="mt-3 text-3xl font-black tracking-tight text-neutral-900 dark:text-white sm:text-5xl">Cronograma</h2><EventScheduleTimeline :event-date="view.eventDate" :event-time="view.time" :activities="eventView.exclusiveSections.cronograma?.activities || []" /></div></section>
+                <section id="cronograma" class="scroll-mt-0 border-b border-neutral-200 bg-white px-5 py-16 dark:border-neutral-800 dark:bg-neutral-900/40 sm:px-8 md:py-24"><div class="mx-auto max-w-7xl"><p class="text-xs font-extrabold uppercase tracking-[0.24em] text-[var(--event-strong)] dark:text-[var(--event-accent)]">02 / Agenda</p><h2 class="mt-3 text-3xl font-black tracking-tight text-neutral-900 dark:text-white sm:text-5xl">Cronograma</h2><EventScheduleTimeline :event-date="view.eventDate" :event-time="view.time" :activities="eventView.exclusiveSections.cronograma?.activities || []" /></div></section>
                 <section id="participantes" class="scroll-mt-40 border-b border-neutral-200 px-5 py-16 dark:border-neutral-800 sm:px-8 md:py-24"><div class="mx-auto max-w-7xl"><p class="text-xs font-extrabold uppercase tracking-[0.24em] text-[var(--event-strong)] dark:text-[var(--event-accent)]">03 / Participación</p><h2 class="mt-3 text-3xl font-black tracking-tight text-neutral-900 dark:text-white sm:text-5xl">Registro de participantes</h2>
                     <div v-if="registrationForms.length" class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2"><article v-for="form in registrationForms" :key="form.id" class="flex flex-col items-start gap-4 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"><div class="w-full"><div class="flex flex-wrap items-center justify-between gap-2"><h3 class="text-lg font-extrabold text-neutral-900 dark:text-white">{{ form.title || 'Formulario de inscripción' }}</h3><span class="rounded-full px-3 py-1 text-xs font-bold" :class="registrationFormIsOpen(form) ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'">{{ registrationFormStatus(form) }}</span></div><p v-if="form.description" class="mt-2 whitespace-pre-line text-sm text-neutral-500 dark:text-neutral-400">{{ form.description }}</p></div><button type="button" @click="selectedRegistrationForm = form" class="mt-auto inline-flex min-h-11 items-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:brightness-95" :style="{ backgroundColor: 'var(--event-accent)' }"><UserCheck class="size-4" /> {{ registrationFormIsOpen(form) ? 'Abrir formulario e inscribirme' : 'Consultar formulario' }}</button></article></div>
                     <div v-else class="mt-8 flex flex-col gap-6 rounded-3xl bg-slate-900 p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-9"><div><h3 class="text-xl font-extrabold">Súmate a este evento</h3><p class="mt-2 max-w-xl whitespace-pre-line text-sm leading-6 text-white/65">Consulta la disponibilidad y completa tu inscripción mediante el formulario oficial.</p></div><a v-if="eventView.exclusiveSections.participantes?.link || eventView.registrationLink" :href="eventView.exclusiveSections.participantes?.link || eventView.registrationLink" target="_blank" rel="noopener noreferrer" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold text-slate-950" :style="{ backgroundColor: 'var(--event-accent)' }"><UserCheck class="size-4" /> Inscribirme <ExternalLink class="size-4" /></a><span v-else class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white/10 px-5 py-3 text-sm font-bold text-white/65"><Check class="size-4" /> Registro no disponible</span></div>
                 </div></section>
-                <section id="ubicaciones" aria-label="Ubicaciones del evento" class="flex w-full flex-col border-b border-neutral-800 bg-neutral-950 px-5 pb-4 pt-4 sm:px-8 sm:pb-6 sm:pt-6">
+                <section id="ubicaciones" aria-label="Ubicaciones del evento" class="flex w-full flex-col border-b border-neutral-200 bg-neutral-100 px-5 pb-4 pt-4 dark:border-neutral-800 dark:bg-neutral-950 sm:px-8 sm:pb-6 sm:pt-6">
                     <header class="mx-auto w-full max-w-7xl shrink-0">
                         <p class="text-xs font-extrabold uppercase tracking-[0.24em] text-[var(--event-strong)] dark:text-[var(--event-accent)]">04 / Espacios</p>
-                        <h2 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-5xl">Ubicaciones</h2>
+                        <h2 class="mt-2 text-3xl font-black tracking-tight text-neutral-900 dark:text-white sm:text-5xl">Ubicaciones</h2>
                     </header>
                     <div v-if="locationSection.croquis" ref="locationMapViewport" class="mt-3 flex w-full justify-center overflow-hidden">
                         <div class="relative shrink-0" :style="locationMapStyle">

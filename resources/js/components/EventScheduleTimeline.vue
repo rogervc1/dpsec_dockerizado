@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Check, Circle, Flag } from '@lucide/vue';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { Check, Circle, Flag, Info } from '@lucide/vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface Activity {
     id: string;
@@ -18,6 +18,13 @@ const props = defineProps<{
 }>();
 
 const expandedId = ref<string | null>(null);
+const showAllRows = ref(false);
+const showFloatingToggle = ref(false);
+const showSectionEndToggle = ref(false);
+const showSectionStartToggle = ref(false);
+const sectionEndTop = ref(0);
+const sectionStartTop = ref(0);
+const collapsedToggleRef = ref<HTMLButtonElement | null>(null);
 const timelineRef = ref<HTMLElement | null>(null);
 const width = ref(800);
 let timelineResizeObserver: ResizeObserver | null = null;
@@ -27,8 +34,15 @@ onMounted(() => {
         width.value = Math.max(280, Math.round(entry.contentRect.width));
     });
     timelineResizeObserver.observe(timelineRef.value);
+    updateFloatingToggle();
+    window.addEventListener('scroll', updateFloatingToggle, { passive: true });
+    window.addEventListener('resize', updateFloatingToggle);
 });
-onBeforeUnmount(() => timelineResizeObserver?.disconnect());
+onBeforeUnmount(() => {
+    timelineResizeObserver?.disconnect();
+    window.removeEventListener('scroll', updateFloatingToggle);
+    window.removeEventListener('resize', updateFloatingToggle);
+});
 const isMobileLayout = computed(() => width.value < 640);
 const columns = computed(() => width.value >= 900 ? 7 : 3);
 const rowGap = computed(() => isMobileLayout.value ? 225 : 250);
@@ -107,6 +121,14 @@ const entries = computed(() => {
         return { ...item, row, x, y, side: 0, cardOffsetX, cardSide: 'center' as const, above, completed: item.kind === 'finish' ? todayIso > endDate : item.date <= todayIso };
     });
 });
+
+const collapsedHeight = computed(() => {
+    const thirdRow = entries.value.filter((entry) => entry.row === 3);
+    const thirdRowY = Math.max(...thirdRow.map((entry) => entry.y), 0);
+    const secondRowY = Math.max(...entries.value.filter((entry) => entry.row < 3).map((entry) => entry.y), 145);
+    return Math.min(height.value, thirdRowY ? thirdRowY + 42 : secondRowY + (isMobileLayout.value ? 115 : 145));
+});
+const hasHiddenRows = computed(() => entries.value.some((entry) => entry.row >= 3));
 
 const height = computed(() => isMobileLayout.value
     ? 250 + Math.max(entries.value.length - 1, 0) * mobileVerticalGap
@@ -214,13 +236,59 @@ const formatCompactDate = (date: string) => {
 const toggleDescription = (id: string) => {
     expandedId.value = expandedId.value === id ? null : id;
 };
+const toggleRows = async () => {
+    if (!showAllRows.value && collapsedToggleRef.value) {
+        sectionStartTop.value = collapsedToggleRef.value.getBoundingClientRect().top + window.scrollY;
+    }
+    showAllRows.value = !showAllRows.value;
+    updateFloatingToggle();
+    if (showAllRows.value) return;
+
+    await nextTick();
+    const section = document.getElementById('cronograma');
+    if (!section) return;
+    const sectionBottom = section.getBoundingClientRect().bottom + window.scrollY;
+    window.scrollTo({ top: Math.max(0, sectionBottom - window.innerHeight), behavior: 'smooth' });
+};
+function updateFloatingToggle() {
+    const section = document.getElementById('cronograma');
+    if (!section || !showAllRows.value) {
+        showFloatingToggle.value = false;
+        showSectionEndToggle.value = false;
+        showSectionStartToggle.value = false;
+        return;
+    }
+    const bounds = section.getBoundingClientRect();
+    const stickyHeader = document.querySelector<HTMLElement>('.sticky.top-0');
+    const headerBottom = stickyHeader?.getBoundingClientRect().bottom || 0;
+    const buttonHeight = 44;
+
+    if (bounds.top >= window.innerHeight || bounds.bottom <= headerBottom + buttonHeight) {
+        showFloatingToggle.value = false;
+        showSectionEndToggle.value = false;
+        showSectionStartToggle.value = false;
+    } else if (sectionStartTop.value - window.scrollY >= window.innerHeight - buttonHeight - 16) {
+        showFloatingToggle.value = false;
+        showSectionEndToggle.value = false;
+        showSectionStartToggle.value = true;
+    } else if (bounds.bottom <= window.innerHeight - buttonHeight - 16) {
+        showFloatingToggle.value = false;
+        showSectionEndToggle.value = true;
+        showSectionStartToggle.value = false;
+        sectionEndTop.value = window.scrollY + bounds.bottom - buttonHeight - 12;
+    } else {
+        showFloatingToggle.value = true;
+        showSectionEndToggle.value = false;
+        showSectionStartToggle.value = false;
+    }
+}
 </script>
 
 <template>
-    <div class="mt-9 overflow-hidden rounded-[28px] border border-emerald-100 bg-gradient-to-br from-emerald-50/80 via-white to-lime-50/70 p-3 shadow-sm dark:border-emerald-950 dark:from-neutral-900 dark:via-neutral-900 dark:to-emerald-950/30 sm:p-5">
+    <div class="relative mt-9 overflow-hidden rounded-[28px] border border-emerald-100 bg-gradient-to-br from-emerald-50/80 via-white to-lime-50/70 p-3 shadow-sm dark:border-emerald-950 dark:from-neutral-900 dark:via-neutral-900 dark:to-emerald-950/30 sm:p-5">
         <p class="mb-2 px-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400">Recorrido cronológico · {{ entries.length }} hitos</p>
-        <div ref="timelineRef" class="relative w-full" :style="{ height: `${height}px` }">
-                <svg class="pointer-events-none absolute inset-0 size-full" :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" fill="none" aria-hidden="true">
+        <div ref="timelineRef" class="relative w-full overflow-hidden" :style="{ height: `${showAllRows ? height : collapsedHeight}px` }">
+                <svg class="pointer-events-none absolute left-0 top-0" :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" fill="none" aria-hidden="true">
                     <path :d="linePath" stroke="currentColor" class="text-neutral-200 dark:text-neutral-700" stroke-width="13" stroke-linecap="round" />
                     <path :d="linePath" pathLength="100" stroke="currentColor" class="text-emerald-500 dark:text-emerald-500" stroke-width="13" stroke-linecap="round" :stroke-dasharray="`${progressState.percent} 100`" />
                     <path :d="linePath" stroke="currentColor" class="text-white dark:text-neutral-900" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 10" />
@@ -231,33 +299,66 @@ const toggleDescription = (id: string) => {
                     <span class="size-3 rounded-full border-2 border-white bg-emerald-600 shadow ring-2 ring-emerald-500 dark:border-neutral-900 dark:bg-emerald-400"></span>
                 </div>
 
-                <div v-for="entry in entries" :key="entry.id" class="absolute z-10" :style="{ left: `${entry.x}px`, top: `${entry.y}px`, transform: 'translate(-50%, -50%)' }">
+                <div v-for="entry in entries" :key="entry.id" class="absolute" :class="expandedId === entry.id ? 'z-30' : 'z-10'" :style="{ left: `${entry.x}px`, top: `${entry.y}px`, transform: 'translate(-50%, -50%)' }">
                     <span class="absolute left-1/2 top-1/2 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[5px] border-white bg-emerald-600 text-white shadow-md dark:border-neutral-900 dark:bg-emerald-400 dark:text-emerald-950" :class="entry.kind === 'activity' && entry.important ? 'important-timeline-node' : ''">
                         <Check v-if="entry.completed" class="size-3" />
                         <Flag v-else-if="entry.kind !== 'activity'" class="size-2.5" />
                         <Circle v-else class="size-2 fill-current" />
                     </span>
-                    <button type="button" :aria-expanded="expandedId === entry.id" :aria-label="entry.kind === 'start' ? entry.subject : `${entry.subject}, ${formatDate(entry.date)}${entry.time ? `, ${entry.time}` : ''}${entry.description ? '. Ver descripción' : ''}`" @click="toggleDescription(entry.id)" @mouseenter="expandedId = entry.id" @mouseleave="expandedId === entry.id && (expandedId = null)" class="group absolute flex flex-col items-center rounded-[18px] border text-center shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 dark:focus-visible:ring-emerald-900" :style="{ left: isMobileLayout ? (entry.cardSide === 'right' ? '16px' : entry.cardSide === 'left' ? `${-cardWidth - 16}px` : '50%') : `calc(50% + ${entry.cardOffsetX}px)`, top: isMobileLayout ? '50%' : entry.above ? '-104px' : '28px', transform: isMobileLayout ? (entry.cardSide === 'center' ? 'translate(-50%, -50%)' : 'translateY(-50%)') : 'translateX(-50%)', width: `${cardWidth}px` }" :class="[entry.completed ? 'border-neutral-300 bg-neutral-100/95 text-neutral-500 opacity-65 grayscale dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400' : entry.kind === 'activity' || (entry.kind === 'finish' && todayIso < entry.date) ? 'border-emerald-200 bg-white text-neutral-800 dark:border-emerald-900 dark:bg-neutral-900 dark:text-neutral-100' : 'border-emerald-300 bg-emerald-700 text-white dark:border-emerald-700 dark:bg-emerald-800', entry.kind === 'activity' && entry.important ? 'important-timeline-card border-green-400 dark:border-green-600' : '', isMobileLayout ? 'px-1.5 py-2' : 'px-2.5 py-2.5']">
+                    <button type="button" :aria-expanded="expandedId === entry.id" :aria-label="entry.kind === 'start' ? entry.subject : `${entry.subject}, ${formatDate(entry.date)}${entry.time ? `, ${entry.time}` : ''}${entry.description ? '. Ver descripción' : ''}`" @click="isMobileLayout ? toggleDescription(entry.id) : (expandedId = entry.id)" @mouseenter="!isMobileLayout && entry.description && (expandedId = entry.id)" @mouseleave="!isMobileLayout && expandedId === entry.id && (expandedId = null)" @focus="!isMobileLayout && entry.description && (expandedId = entry.id)" @blur="!isMobileLayout && expandedId === entry.id && (expandedId = null)" class="group absolute flex flex-col items-center rounded-[18px] border text-center shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 dark:focus-visible:ring-emerald-900" :style="{ left: isMobileLayout ? (entry.cardSide === 'right' ? '16px' : entry.cardSide === 'left' ? `${-cardWidth - 16}px` : '50%') : `calc(50% + ${entry.cardOffsetX}px)`, top: isMobileLayout ? '50%' : entry.above ? '-104px' : '28px', transform: isMobileLayout ? (entry.cardSide === 'center' ? 'translate(-50%, -50%)' : 'translateY(-50%)') : 'translateX(-50%)', width: `${cardWidth}px` }" :class="[entry.completed ? 'border-neutral-300 bg-neutral-100/95 text-neutral-500 opacity-65 grayscale dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400' : entry.kind === 'activity' || (entry.kind === 'finish' && todayIso < entry.date) ? 'border-emerald-200 bg-white text-neutral-800 dark:border-emerald-900 dark:bg-neutral-900 dark:text-neutral-100' : 'border-emerald-300 bg-emerald-700 text-white dark:border-emerald-700 dark:bg-emerald-800', entry.kind === 'activity' && entry.important ? 'important-timeline-card border-green-400 dark:border-green-600' : '', isMobileLayout ? 'px-1.5 py-2' : 'px-2.5 py-2.5', entry.description && expandedId === entry.id ? 'scale-110 shadow-2xl' : '']">
                         <span class="max-w-full break-words font-extrabold leading-snug" :class="isMobileLayout ? 'text-[10px]' : 'text-xs'">{{ entry.subject }}</span>
                         <template v-if="entry.kind !== 'start'">
                             <span class="mt-1 font-semibold" :class="[entry.kind === 'activity' && !entry.completed ? 'text-emerald-700 dark:text-emerald-300' : '', isMobileLayout ? 'text-[9px]' : 'text-[10px]']">{{ isMobileLayout ? formatCompactDate(entry.date) : formatDate(entry.date) }}<template v-if="entry.time"><span v-if="isMobileLayout" class="block">{{ entry.time }}</span><span v-else> · {{ entry.time }}</span></template></span>
                             <span v-if="entry.completed" class="mt-1 rounded-full bg-neutral-200/80 px-2 py-0.5 text-[9px] font-bold dark:bg-neutral-700">Realizado</span>
                             <span v-else-if="entry.kind === 'finish'" class="mt-1 rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-bold">Cierre</span>
                         </template>
+                        <span v-if="entry.description && expandedId !== entry.id" class="mt-1.5 inline-flex items-center gap-1 text-[8.5px] font-extrabold uppercase tracking-wide text-amber-700 dark:text-amber-300"><Info class="size-2.5" />Ver descripción</span>
+                        <span v-if="entry.description && expandedId === entry.id" class="mt-2 block max-h-32 w-full overflow-y-auto border-t border-neutral-200 pt-2 text-left text-[10px] font-medium leading-relaxed text-neutral-600 dark:border-neutral-700 dark:text-neutral-300">{{ entry.description }}</span>
                     </button>
-                    <span v-if="entry.description && expandedId === entry.id" class="pointer-events-none absolute left-1/2 z-30 -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-3 text-left text-xs leading-5 text-neutral-700 shadow-xl dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-300" :style="{ top: entry.above ? '-160px' : '112px', width: `${Math.min(224, cardWidth + 40)}px` }">{{ entry.description }}</span>
                 </div>
 
         </div>
+        <button v-if="hasHiddenRows && !showAllRows" ref="collapsedToggleRef" type="button" @click="toggleRows" :style="{ top: `${collapsedHeight - 100}px` }" class="absolute left-1/2 z-40 -translate-x-1/2 rounded-full bg-emerald-700 px-7 py-3 text-xs font-extrabold tracking-wider text-white shadow-md transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400">
+            {{ showAllRows ? 'OCULTAR SECCIÓN' : 'VER MAS' }}
+        </button>
+        <div v-if="hasHiddenRows && !showAllRows" class="pointer-events-none absolute inset-x-0 bottom-0 z-30 backdrop-blur-md bg-white/35 dark:bg-neutral-900/35" :style="{ top: `${collapsedHeight - 200}px`, maskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)' }"></div>
     </div>
+    <Teleport to="body">
+        <button v-if="hasHiddenRows && showAllRows && showFloatingToggle" type="button" @click="toggleRows" class="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-emerald-700 px-7 py-3 text-xs font-extrabold tracking-wider text-white shadow-2xl transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400">
+            OCULTAR SECCIÓN
+        </button>
+        <button v-if="hasHiddenRows && showAllRows && showSectionEndToggle" type="button" @click="toggleRows" :style="{ position: 'absolute', top: `${sectionEndTop}px`, left: '50%', transform: 'translateX(-50%)' }" class="z-[60] rounded-full bg-emerald-700 px-7 py-3 text-xs font-extrabold tracking-wider text-white shadow-2xl transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400">
+            OCULTAR SECCIÓN
+        </button>
+        <button v-if="hasHiddenRows && showAllRows && showSectionStartToggle" type="button" @click="toggleRows" :style="{ position: 'absolute', top: `${sectionStartTop}px`, left: '50%', transform: 'translateX(-50%)' }" class="z-[60] rounded-full bg-emerald-700 px-7 py-3 text-xs font-extrabold tracking-wider text-white shadow-2xl transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-300 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400">
+            OCULTAR SECCIÓN
+        </button>
+    </Teleport>
 </template>
 
 <style scoped>
 .important-timeline-card {
-    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.24), 0 0 16px rgba(34, 197, 94, 0.2);
+    animation: important-card-pulse 2.8s ease-in-out infinite alternate;
 }
 
 .important-timeline-node {
-    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.28), 0 0 12px rgba(34, 197, 94, 0.5);
+    animation: important-node-pulse 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes important-card-pulse {
+    from { box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.12), 0 0 5px rgba(34, 197, 94, 0.08); }
+    to { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.42), 0 0 21px rgba(34, 197, 94, 0.34); }
+}
+
+@keyframes important-node-pulse {
+    from { box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.12), 0 0 5px rgba(34, 197, 94, 0.18); }
+    to { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.4), 0 0 16px rgba(34, 197, 94, 0.72); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .important-timeline-card,
+    .important-timeline-node {
+        animation: none;
+    }
 }
 </style>
